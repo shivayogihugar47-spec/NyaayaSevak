@@ -159,28 +159,44 @@ async function generateChatResponse(question, documentClauses) {
   const fullDocText = documentClauses.map(c => c.text).join('\n');
   const lawsText = retrievedLaws.map(l => `${l.act_name} Sec ${l.section_number}: ${l.content}`).join('\n\n');
 
-  const prompt = `You are NyayaCheck, a legal assistant. Answer the user's question based strictly on the provided document and the retrieved laws. If the answer isn't in the provided text, say so. Do not give binding legal advice.
-  
+  const prompt = `You are NyayaCheck, a strict legal assistant. Answer the user's question based ONLY on the provided document clauses and the retrieved laws.
+
 Document Context:
-${fullDocText.substring(0, 4000)} // Truncated for token limit
+${fullDocText.substring(0, 4000)}
 
 Retrieved Laws Context:
-${lawsText}
+${retrievedLaws.length > 0 ? lawsText : "NONE FOUND"}
 
 Rules:
-1. Do NOT invent citations. Use only the Retrieved Laws context.
+1. Do NOT invent citations or laws. Use only the Retrieved Laws context.
 2. If you cite the Model Tenancy Act, you MUST append this exact caveat: "(Model Tenancy Act — binding only in states that have adopted it; verify local applicability)".
+3. If no relevant laws are in the Retrieved Laws Context (i.e. it says "NONE FOUND"), or if the document clauses do not contain the answer, you MUST state that you cannot find a grounded answer in the legal context rather than guessing. Do not try to answer using general knowledge. If this happens, you MUST return an empty array [] for "sources".
+4. Your output MUST be a JSON object matching this exact schema:
+{
+  "answer": "Your detailed answer to the question",
+  "sources": [
+    { "type": "clause" | "law", "reference": "e.g. Clause 2 or Indian Contract Act, Sec 74" }
+  ]
+}
 
 User Question: ${question}`;
 
   const response = await openrouter.chat.send({
     chatRequest: {
       model: MODEL,
-      messages: [{ role: 'user', content: prompt }]
+      messages: [{ role: 'user', content: prompt }],
+      response_format: { type: "json_object" }
     }
   });
 
-  return response.choices[0].message.content;
+  try {
+    let rawResponse = response.choices[0].message.content;
+    const cleanJson = rawResponse.trim().replace(/^```json/, '').replace(/```$/, '').trim();
+    return JSON.parse(cleanJson);
+  } catch (err) {
+    console.error("Failed to parse chat JSON", err);
+    return { answer: "Sorry, I encountered an error formatting my response.", sources: [] };
+  }
 }
 
 // New: Negotiation Message Generator
@@ -244,9 +260,50 @@ Format your response as a valid JSON object matching this schema exactly (no mar
   }
 }
 
+// New: Document Level Risks
+async function analyzeDocumentLevelRisks(documentText) {
+  const prompt = `You are an expert Indian legal reviewer. Review the entire provided document for "Document-Level Risks" that cannot be understood by looking at a single clause in isolation.
+  
+Specifically, look for:
+1. 11-Month Registration Avoidance: Check if the lease term is exactly 11 months. If so, explain that this is a common practice to avoid mandatory registration under Section 17(1)(d) of the Registration Act, 1908, but it reduces the tenant's legal protection in court.
+
+Document Text:
+${documentText.substring(0, 8000)}
+
+Output a JSON object matching this schema exactly:
+{
+  "document_risks": [
+    {
+      "title": "Short title of the risk (e.g. '11-Month Registration Avoidance')",
+      "description": "Clear explanation of the risk and why it matters.",
+      "risk_level": "Medium" | "High"
+    }
+  ]
+}
+If no document-level risks are found, return an empty array for "document_risks".`;
+
+  const response = await openrouter.chat.send({
+    chatRequest: {
+      model: MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      response_format: { type: "json_object" }
+    }
+  });
+
+  try {
+    let rawResponse = response.choices[0].message.content;
+    const cleanJson = rawResponse.trim().replace(/^```json/, '').replace(/```$/, '').trim();
+    return JSON.parse(cleanJson).document_risks || [];
+  } catch (err) {
+    console.error("Failed to parse document risks JSON", err);
+    return [];
+  }
+}
+
 module.exports = {
   processClause,
   generateChatResponse,
   generateNegotiationMessage,
-  compareDocuments
+  compareDocuments,
+  analyzeDocumentLevelRisks
 };

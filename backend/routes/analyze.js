@@ -30,11 +30,14 @@ router.post('/upload', upload.single('document'), async (req, res) => {
 
     const clauses = segmentClauses(rawText);
     
+    // Run document-level risk check (e.g. 11-month lease)
+    const documentRisks = await ragService.analyzeDocumentLevelRisks(rawText);
+
     // Generate a temporary session ID
     const sessionId = Date.now().toString();
-    sessionStore[sessionId] = { clauses, flags: {} };
+    sessionStore[sessionId] = { clauses, flags: {}, documentRisks };
 
-    res.json({ sessionId, clauses });
+    res.json({ sessionId, clauses, documentRisks });
   } catch (error) {
     console.error("Upload Error:", error);
     // Forward specific OCR errors to the client
@@ -82,8 +85,8 @@ router.post('/chat', async (req, res) => {
     const session = sessionStore[sessionId];
     if (!session) return res.status(404).json({ error: "Session not found" });
 
-    const answer = await ragService.generateChatResponse(question, session.clauses);
-    res.json({ answer });
+    const chatData = await ragService.generateChatResponse(question, session.clauses);
+    res.json({ answer: chatData.answer, sources: chatData.sources || [] });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Chat failed" });

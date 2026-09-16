@@ -118,7 +118,7 @@ function App() {
         sessionId: session.sessionId,
         question: msg
       });
-      setChatMessages(prev => [...prev, { role: 'assistant', content: res.data.answer }]);
+      setChatMessages(prev => [...prev, { role: 'assistant', content: res.data.answer, sources: res.data.sources }]);
     } catch (err) {
       setChatMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I encountered an error.' }]);
     } finally {
@@ -328,6 +328,26 @@ function App() {
                   </div>
                 ) : (
                   <div className="flex flex-col gap-4">
+                    
+                    {session.documentRisks && session.documentRisks.length > 0 && (
+                      <div className="mb-4 space-y-4">
+                        {session.documentRisks.map((risk, idx) => (
+                          <div key={`doc-risk-${idx}`} className={`p-6 rounded-2xl border ${risk.risk_level === 'High' ? 'bg-red-950/20 border-red-500/30' : 'bg-yellow-950/20 border-yellow-500/30'}`}>
+                            <div className="flex items-start justify-between mb-4">
+                              <h4 className="font-semibold text-lg text-white flex items-center gap-2">
+                                <AlertTriangle className={`w-5 h-5 ${risk.risk_level === 'High' ? 'text-red-400' : 'text-yellow-400'}`} />
+                                Document-Wide Risk: {risk.title}
+                              </h4>
+                              <span className={`text-xs px-3 py-1 rounded-full font-medium border ${risk.risk_level === 'High' ? 'bg-red-500/20 text-red-300 border-red-500/30' : 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30'}`}>
+                                {risk.risk_level} Risk
+                              </span>
+                            </div>
+                            <p className="text-sm text-neutral-300 leading-relaxed">{risk.description}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
                     {Object.entries(flags).map(([id, analysis]) => {
                       const isRisky = analysis.risk_level === 'High' || analysis.risk_level === 'Medium';
                       const badgeColor = analysis.risk_level === 'High' ? 'bg-red-500/20 text-red-300 border-red-500/30' 
@@ -431,6 +451,17 @@ function App() {
                               {msg.content}
                             </ReactMarkdown>
                           </div>
+                          {msg.sources && msg.sources.length > 0 && (
+                            <div className="mt-3 pt-3 border-t border-white/10 flex flex-wrap gap-2">
+                              <span className="text-[10px] uppercase text-neutral-500 font-semibold mb-1 w-full">Sources:</span>
+                              {msg.sources.map((src, i) => (
+                                <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-neutral-300 flex items-center gap-1">
+                                  {src.type === 'law' ? <FileText className="w-3 h-3 text-indigo-400" /> : <CheckCircle2 className="w-3 h-3 text-green-400" />}
+                                  {src.reference}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       ))}
                       {chatLoading && (
