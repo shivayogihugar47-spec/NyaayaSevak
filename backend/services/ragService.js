@@ -210,9 +210,10 @@ Your goal is to achieve this outcome: "${analysis.recommended_action}"
 Draft a short, professional, 1-2 paragraph message that the tenant can copy-paste into an email or WhatsApp to ask the landlord to amend or remove this clause gracefully.
 
 CRITICAL RULES:
-1. You MUST explicitly reference the original clause (e.g., "Regarding Clause X...") and the specific law (e.g., "As per Section Y of Act Z...") in your message. 
-2. Do not offer generic legal advice.
-3. Keep the tone collaborative but firm on the legal boundary.`;
+1. You MUST explicitly reference the original clause and the specific law in your message.
+2. Ensure the message flows naturally and is grammatically correct. Do NOT clumsily paste template variables like "Regarding [clause]" into the middle of another sentence. It must read as a coherent, human-written letter.
+3. Do not offer generic legal advice.
+4. Keep the tone collaborative but firm on the legal boundary.`;
 
   const response = await openrouter.chat.send({
     chatRequest: {
