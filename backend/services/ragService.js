@@ -203,10 +203,16 @@ User Question: ${question}`;
 async function generateNegotiationMessage(clauseText, analysis) {
   const prompt = `You are a polite but firm legal assistant helping a tenant draft a negotiation email to their landlord. 
 The landlord proposed this clause: "${clauseText}"
-This clause is problematic because: "${analysis.legal_issue}" (Source: ${analysis.cited_law || 'General fairness'})
+This clause is problematic because: "${analysis.legal_issue}" 
+Relevant Law: ${analysis.cited_law || 'General fairness'}
 Your goal is to achieve this outcome: "${analysis.recommended_action}"
 
-Draft a short, professional, 2-3 sentence paragraph that the tenant can copy-paste into an email to ask the landlord to amend or remove this clause gracefully.`;
+Draft a short, professional, 1-2 paragraph message that the tenant can copy-paste into an email or WhatsApp to ask the landlord to amend or remove this clause gracefully.
+
+CRITICAL RULES:
+1. You MUST explicitly reference the original clause (e.g., "Regarding Clause X...") and the specific law (e.g., "As per Section Y of Act Z...") in your message. 
+2. Do not offer generic legal advice.
+3. Keep the tone collaborative but firm on the legal boundary.`;
 
   const response = await openrouter.chat.send({
     chatRequest: {

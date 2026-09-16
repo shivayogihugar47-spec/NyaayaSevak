@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { UploadCloud, ShieldAlert, CheckCircle2, ChevronRight, FileText, MessageSquare, Send, X, ArrowLeftRight, AlertTriangle, Loader2 } from 'lucide-react';
+import { UploadCloud, ShieldAlert, CheckCircle2, ChevronRight, FileText, MessageSquare, Send, X, ArrowLeftRight, AlertTriangle, Loader2, Copy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import LandingPage from './LandingPage';
@@ -404,13 +404,27 @@ function App() {
                                   {draftingClause === id ? 'Drafting Message...' : 'Draft Negotiation Email'}
                                 </button>
                               ) : (
-                                <div className="bg-neutral-900 border border-neutral-700 rounded-xl p-5 relative">
-                                  <div className="text-xs text-neutral-400 mb-3 font-medium flex items-center gap-2">
-                                    <Send className="w-3.5 h-3.5" /> Suggested Message to Landlord
+                                  <div className="bg-neutral-900 border border-neutral-700 rounded-xl p-5 relative group">
+                                    <div className="text-xs text-neutral-400 mb-3 font-medium flex items-center justify-between">
+                                      <span className="flex items-center gap-2">
+                                        <Send className="w-3.5 h-3.5" /> Suggested Message to Landlord
+                                      </span>
+                                      <button 
+                                        onClick={() => navigator.clipboard.writeText(negotiationDrafts[id])}
+                                        className="text-neutral-500 hover:text-white transition-colors flex items-center gap-1 opacity-0 group-hover:opacity-100"
+                                        title="Copy to clipboard"
+                                      >
+                                        <Copy className="w-3.5 h-3.5" /> Copy
+                                      </button>
+                                    </div>
+                                    <textarea 
+                                      className="w-full bg-black/30 border border-white/5 rounded-lg p-3 text-sm text-neutral-200 resize-none focus:outline-none focus:ring-1 focus:ring-indigo-500/50"
+                                      rows={6}
+                                      value={negotiationDrafts[id]}
+                                      onChange={(e) => setNegotiationDrafts(prev => ({ ...prev, [id]: e.target.value }))}
+                                    />
                                   </div>
-                                  <p className="text-sm text-neutral-200 whitespace-pre-wrap">{negotiationDrafts[id]}</p>
-                                </div>
-                              )}
+                                )
                             </div>
                           )}
                         </div>
