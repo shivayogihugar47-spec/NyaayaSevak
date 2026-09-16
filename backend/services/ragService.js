@@ -307,10 +307,117 @@ If no document-level risks are found, return an empty array for "document_risks"
   }
 }
 
+// New: Lawyer Questions Generator for Summary Checklist
+async function generateLawyerQuestions(documentRisks, clauseAnalyses) {
+  const highRisk = clauseAnalyses.filter(c => c.analysis.risk_level === 'High');
+  const lowConfidence = clauseAnalyses.filter(c => c.analysis.confidence_level === 'Low');
+  const mediumRisk = clauseAnalyses.filter(c => c.analysis.risk_level === 'Medium');
+
+  const prompt = `You are a senior advocate preparing a client for a formal consultation with a lawyer regarding a rental/contract agreement.
+
+Document-Level Risks Found:
+${JSON.stringify(documentRisks, null, 2)}
+
+High-Severity Flagged Clauses:
+${JSON.stringify(highRisk.map(c => ({ clause_id: c.id, text: c.text, category: c.analysis.category, issue: c.analysis.legal_issue, cited_law: c.analysis.cited_law })), null, 2)}
+
+Medium-Severity & Low-Confidence Items:
+${JSON.stringify([...mediumRisk, ...lowConfidence].map(c => ({ clause_id: c.id, text: c.text, category: c.analysis.category, issue: c.analysis.legal_issue, confidence: c.analysis.confidence_level })), null, 2)}
+
+Generate 3 to 4 highly targeted, professional questions for the client to ask their advocate during a legal consultation.
+
+CRITICAL RULES:
+1. Questions must read as genuine consultation prep (e.g., asking about statutory remedies, court enforceability, state-specific amendments, or structuring addendums).
+2. DO NOT generate draft messages/emails to the landlord or negotiation dialogue.
+3. Explicitly reference relevant statutory provisions (e.g. Section 74 of the Indian Contract Act, 1872 for penalty forfeiture, Section 17 of the Registration Act, 1908 for 11-month leases, or Model Tenancy Act adoption status) where applicable.
+4. Output ONLY a strictly valid JSON object matching this schema:
+{
+  "questions": [
+    {
+      "topic": "Short topic (e.g. 'Penalty Clause Enforceability')",
+      "question": "The precise, professional question to ask the advocate.",
+      "context": "Brief explanation of why this question is necessary based on the flagged clause or document risk."
+    }
+  ]
+}`;
+
+  try {
+    const response = await openrouter.chat.send({
+      chatRequest: {
+        model: MODEL,
+        messages: [{ role: 'user', content: prompt }],
+        response_format: { type: "json_object" }
+      }
+    });
+
+    let rawResponse = response.choices[0].message.content;
+    const cleanJson = rawResponse.trim().replace(/^```json/, '').replace(/```$/, '').trim();
+    const parsed = JSON.parse(cleanJson);
+    return parsed.questions || [];
+  } catch (err) {
+    console.error("Failed to generate lawyer questions", err);
+    return [
+      {
+        topic: "Clause Enforceability",
+        question: "Are the penalty and immediate eviction clauses legally enforceable under local state tenancy laws?",
+        context: "Multiple high-risk clauses were identified in the agreement."
+      }
+    ];
+  }
+}
+
+async function generateSummaryChecklist(documentRisks, clauseAnalyses) {
+  const lawyerQuestions = await generateLawyerQuestions(documentRisks, clauseAnalyses);
+
+  // Non-obvious legal insights collection
+  const nonObviousInsights = [];
+  
+  const registrationRisk = documentRisks.find(r => r.title.includes('11-Month') || r.description.includes('Registration Act'));
+  if (registrationRisk) {
+    nonObviousInsights.push({
+      title: "11-Month Lease Registration Risk (Section 17, Registration Act 1908)",
+      insight: "While 11-month agreements avoid mandatory registration fees, an unregistered document may be inadmissible as primary evidence in court for enforcing lease terms or recovering deposits under Section 49 of the Registration Act."
+    });
+  }
+
+  // General non-obvious insight on NI Act Section 138 (cheque bouncing / statutory notice)
+  nonObviousInsights.push({
+    title: "Statutory Notice Timelines for Bounced Rent Payments (NI Act Section 138)",
+    insight: "If security deposit or rent cheques bounce, Section 138 of the Negotiable Instruments Act mandates serving a legal demand notice within 30 days of receiving bank dishonour memo, with 15 days provided for payment before filing a complaint."
+  });
+
+  return {
+    disclaimer: "DISCLAIMER: NyayaCheck provides automated legal analysis based on statutory databases for informational purposes only. It does not constitute formal legal advice. Laws vary by state and local jurisdiction. Always consult a qualified advocate before signing or taking legal action.",
+    generated_at: new Date().toISOString(),
+    summary_stats: {
+      total_clauses_analyzed: clauseAnalyses.length,
+      high_risk_count: clauseAnalyses.filter(c => c.analysis.risk_level === 'High').length,
+      medium_risk_count: clauseAnalyses.filter(c => c.analysis.risk_level === 'Medium').length,
+      document_risks_count: documentRisks.length
+    },
+    document_level_risks: documentRisks,
+    non_obvious_insights: nonObviousInsights,
+    flagged_clauses: clauseAnalyses.map(c => ({
+      clause_id: c.id,
+      text: c.text,
+      category: c.analysis.category,
+      risk_level: c.analysis.risk_level,
+      in_simple_terms: c.analysis.in_simple_terms,
+      legal_issue: c.analysis.legal_issue,
+      cited_law: c.analysis.cited_law,
+      confidence_level: c.analysis.confidence_level,
+      recommended_action: c.analysis.recommended_action
+    })),
+    questions_for_lawyer: lawyerQuestions
+  };
+}
+
 module.exports = {
   processClause,
   generateChatResponse,
   generateNegotiationMessage,
   compareDocuments,
-  analyzeDocumentLevelRisks
+  analyzeDocumentLevelRisks,
+  generateLawyerQuestions,
+  generateSummaryChecklist
 };

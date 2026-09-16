@@ -14,3 +14,30 @@ body {
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+@media print {
+  body {
+    background-color: #ffffff !important;
+    color: #111827 !important;
+  }
+  header, nav, .no-print {
+    display: none !important;
+  }
+  .print-only-modal {
+    position: static !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+    box-shadow: none !important;
+    border: none !important;
+    overflow: visible !important;
+  }
+  .print-card {
+    background: #f9fafb !important;
+    border: 1px solid #e5e7eb !important;
+    color: #111827 !important;
+    break-inside: avoid;
+  }
+}

@@ -120,4 +120,45 @@ router.post('/compare', async (req, res) => {
   }
 });
 
+// POST /api/export-summary
+router.post('/export-summary', async (req, res) => {
+  try {
+    const { sessionId } = req.body;
+    let session = sessionStore[sessionId];
+    
+    if (!session && req.body.clauses && req.body.flags) {
+      session = {
+        clauses: req.body.clauses,
+        flags: req.body.flags,
+        documentRisks: req.body.documentRisks || []
+      };
+    }
+
+    if (!session) {
+      return res.status(404).json({ error: "Session not found" });
+    }
+
+    // Ensure all clauses have analysis
+    const clauseAnalyses = [];
+    for (const clause of session.clauses) {
+      let analysis = session.flags[clause.id];
+      if (!analysis) {
+        analysis = await ragService.processClause(clause.text);
+        session.flags[clause.id] = analysis;
+      }
+      clauseAnalyses.push({
+        id: clause.id,
+        text: clause.text,
+        analysis
+      });
+    }
+
+    const summaryChecklist = await ragService.generateSummaryChecklist(session.documentRisks || [], clauseAnalyses);
+    res.json(summaryChecklist);
+  } catch (err) {
+    console.error("Export summary error:", err);
+    res.status(500).json({ error: "Summary export failed" });
+  }
+});
+
 module.exports = router;
