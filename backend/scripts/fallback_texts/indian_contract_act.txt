@@ -1,0 +1,21 @@
+# THE INDIAN CONTRACT ACT, 1872
+# Key Sections Governing Unfair Clauses and Penalties in Agreements
+
+Section 23: What considerations and objects are lawful, and what not
+The consideration or object of an agreement is lawful, unless—
+it is forbidden by law; or
+is of such a nature that, if permitted, it would defeat the provisions of any law; or
+is fraudulent; or
+involves or implies injury to the person or property of another; or
+the Court regards it as immoral, or opposed to public policy.
+Every agreement of which the object or consideration is unlawful is void.
+Interpretation for Contracts: If a lease agreement contains a clause that allows the landlord to physically harm the tenant, lock them out illegally, cut off essential water/electricity supplies without court orders, or forces the tenant to waive their statutory rights, that specific clause is considered void and unenforceable because it defeats the provisions of law (e.g., TPA) and is opposed to public policy.
+
+Section 73: Compensation for loss or damage caused by breach of contract
+When a contract has been broken, the party who suffers by such breach is entitled to receive, from the party who has broken the contract, compensation for any loss or damage caused to him thereby, which naturally arose in the usual course of things from such breach, or which the parties knew, when they made the contract, to be likely to result from the breach of it.
+Such compensation is not to be given for any remote and indirect loss or damage sustained by reason of the breach.
+Interpretation for Rent Agreements: If a tenant leaves early (breaks the lock-in period), the landlord can only claim actual damages suffered (like the loss of rent for the months the property remained vacant despite efforts to re-rent). The landlord cannot claim imaginary damages that did not actually occur.
+
+Section 74: Compensation for breach of contract where penalty stipulated for
+When a contract has been broken, if a sum is named in the contract as the amount to be paid in case of such breach, or if the contract contains any other stipulation by way of penalty, the party complaining of the breach is entitled, whether or not actual damage or loss is proved to have been caused thereby, to receive from the party who has broken the contract reasonable compensation not exceeding the amount so named or, as the case may be, the penalty stipulated for.
+Interpretation for Rent Agreements: "Penalty clauses" that are disproportionately high are invalid. For example, a clause stating "If rent is delayed by 1 day, the tenant must pay a penalty of Rs. 10,000 per day" is considered a penalty in terrorem. Indian courts, under Section 74, will strike down this penalty and only allow the landlord to recover "reasonable compensation" (e.g., standard market interest on the delayed amount), capping the maximum recovery to the stated amount. Landlords cannot enforce blatantly unfair liquidated damage clauses.

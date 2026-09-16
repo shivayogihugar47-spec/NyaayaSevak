@@ -1,0 +1,35 @@
+{
+  "act_name": "The Consumer Protection Act, 2019",
+  "act_number": "35 of 2019",
+  "jurisdiction": "India (Central Act) — in force since 20 July 2020",
+  "relevance": "Governs loan agreements, service contracts, purchase/EMI agreements, and any consumer-facing contract. Its 'unfair contract' definition (Section 2(46)) is unusually well-matched to this product's purpose — it names the exact clause patterns to flag.",
+  "primary_source_for_verification": "https://www.indiacode.nic.in (search: Consumer Protection Act 2019) or https://indiankanoon.org",
+  "last_researched": "2026-09-15",
+  "sections": [
+    {
+      "section_id": "CPA_2_46",
+      "section_number": "2(46)",
+      "title": "Definition: Unfair contract",
+      "text": "An 'unfair contract' is a contract between a manufacturer/trader/service provider and a consumer whose terms cause significant change in the rights of the consumer, including: requiring excessive security deposits for performance of contractual obligations; imposing a penalty on the consumer for a breach that is wholly disproportionate to the actual loss suffered by the other party; refusing early repayment of debt on payment of applicable penalty; entitling a party to unilaterally terminate the contract without reasonable cause; permitting a party to assign the contract to the detriment of the consumer without consent; or imposing on the consumer any unreasonable charge/obligation which puts the consumer at a disadvantage.",
+      "importance_for_flagging": "very high",
+      "typical_clause_conflict": "This is close to a direct checklist for your flagging engine — 'excessive security deposit', 'disproportionate penalty', 'unilateral termination right for the business only', 'unreasonable charges' are almost word-for-word the categories your product should be scanning for across ALL document types, not just consumer contracts."
+    },
+    {
+      "section_id": "CPA_2_47",
+      "section_number": "2(47)",
+      "title": "Definition: Unfair trade practice",
+      "text": "An unfair trade practice includes making false or misleading statements about the standard, quality, quantity, or grade of goods/services; falsely representing used/renovated goods as new; falsely claiming a sponsorship, approval, or affiliation that doesn't exist; and other deceptive practices used to promote a sale or service.",
+      "importance_for_flagging": "medium",
+      "typical_clause_conflict": "Relevant mainly for consumer-facing document types (service agreements, purchase contracts) where marketing claims are baked into the contract text itself."
+    },
+    {
+      "section_id": "CPA_2_11",
+      "section_number": "2(11)",
+      "title": "Definition: Deficiency (of service)",
+      "text": "Deficiency means any fault, imperfection, shortcoming, or inadequacy in the quality, nature, or manner of performance required to be maintained by or under any law, or which a service provider has undertaken to perform under a contract or otherwise.",
+      "importance_for_flagging": "medium",
+      "typical_clause_conflict": "Useful for the document-comparison/Q&A feature — helps the AI explain whether a service actually delivered matches what the contract promised."
+    }
+  ],
+  "notes_for_build_team": "Section 2(46)'s unfair-contract categories overlap heavily with the Fairness Score concept in the PRD — consider using this section's exact category list ('excessive deposit', 'disproportionate penalty', 'unilateral termination', 'unreasonable charges') as literal tags/labels in your flagging UI across document types, not just when the document is a formal consumer contract."
+}

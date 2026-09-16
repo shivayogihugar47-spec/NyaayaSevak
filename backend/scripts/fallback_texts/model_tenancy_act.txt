@@ -1,0 +1,28 @@
+# THE MODEL TENANCY ACT, 2021
+# Key Sections Governing Rent Control, Deposits, and Evictions
+
+Section 4: Tenancy Agreement
+(1) Notwithstanding anything contained in this Act or any other law for the time being in force, no person shall, after the commencement of this Act, let or take on rent any premises except by an agreement in writing. 
+(2) Where, in relation to a tenancy created before the commencement of this Act, an agreement in writing was not entered into, the landlord and the tenant shall enter into an agreement in writing with regard to that tenancy within a period of two months from the date of commencement of this Act.
+
+Section 8: Rent payable
+The rent payable in respect of a premises shall be the rent agreed to between the landlord and the tenant in accordance with the terms of the tenancy agreement. A landlord cannot arbitrarily increase the rent during the active period of the tenancy agreement unless explicitly stated via an agreed-upon escalation clause in the signed agreement.
+
+Section 11: Security Deposit Limits
+(1) The security deposit to be paid by the tenant in advance shall be as determined by the agreement and as agreed upon between the landlord and the tenant:
+Provided that the security deposit shall not exceed—
+(a) two months’ rent, in case of residential premises; and
+(b) six months’ rent, in case of non-residential (commercial) premises.
+(2) The security deposit shall be refunded to the tenant on the date of taking over vacant possession of the premises from the tenant, after making due deduction of any liability of the tenant. Landlords demanding 10-month or 12-month deposits for residential homes are acting contrary to the Model Tenancy Act guidelines.
+
+Section 15: Repair and maintenance of premises
+(1) Notwithstanding any agreement in writing to the contrary, the landlord and the tenant shall be bound to keep the premises in as good a condition as at the commencement of the tenancy, except for normal wear and tear.
+(2) The landlord is responsible for structural repairs (e.g., changing of plumbing pipes, electrical wiring), while the tenant is responsible for day-to-day maintenance (e.g., replacing fused bulbs, fixing leaking taps). If a landlord fails to make structural repairs, the tenant may carry them out and deduct the cost from the rent, provided proper notice is given.
+
+Section 21: Eviction and recovery of possession of premises by landlord
+(1) A tenant shall not be evicted during the continuance of tenancy agreement except in accordance with the provisions of sub-section (2).
+(2) The Rent Court may, on an application made to it in the prescribed manner, make an order for the recovery of possession of the premises on one or more of the following grounds, namely:
+(a) that the tenant does not pay the arrears of rent and other charges payable in full within one month of notice;
+(b) that the tenant has, without the written consent of the landlord, parted with the possession of whole or any part of the premises;
+(c) that the tenant has continued misuse of the premises (e.g., causing public nuisance or using residential for commercial).
+This means a landlord cannot execute an arbitrary lock-out or eviction without establishing legal grounds and approaching the Rent Court.

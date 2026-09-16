@@ -1,0 +1,35 @@
+{
+  "act_name": "The Real Estate (Regulation and Development) Act, 2016 (RERA)",
+  "act_number": "16 of 2016",
+  "jurisdiction": "India (Central Act) — implemented via State RERA Authorities",
+  "relevance": "Governs builder-buyer agreements for under-construction property. Delayed possession and defect disputes are among the most common and highest-value legal problems ordinary Indians face — this Act gives buyers strong statutory rights that override anything less favorable in the builder-buyer agreement itself.",
+  "primary_source_for_verification": "https://www.indiacode.nic.in (search: Real Estate Regulation and Development Act 2016) and the relevant State RERA Authority website",
+  "last_researched": "2026-09-15",
+  "sections": [
+    {
+      "section_id": "RERA_18",
+      "section_number": "18",
+      "title": "Return of amount and compensation for delayed possession",
+      "text": "If a promoter (builder/developer) fails to complete construction or give possession of an apartment/building by the date specified in the agreement for sale (or an approved extension), the buyer (allottee) has an unqualified right to either: (a) withdraw from the project and receive a full refund of the amount paid, with interest and compensation, or (b) continue with the project and receive interest for every month of delay until possession is actually handed over. This right exists regardless of what the builder-buyer agreement itself says.",
+      "importance_for_flagging": "very high",
+      "typical_clause_conflict": "Builder-buyer agreements that impose one-sided penalty structures — e.g., a small, fixed 'delay compensation' amount (often far below market interest rates) presented as the buyer's ONLY remedy for delay — are frequently attempts to contract around this statutory right, which they cannot legally do."
+    },
+    {
+      "section_id": "RERA_14_3",
+      "section_number": "14(3)",
+      "title": "Defect liability period",
+      "text": "The promoter is liable to rectify structural defects or any other defects in workmanship, quality, or provision of services brought to their notice by the buyer within 5 years of handing over possession, without extra charge, within 30 days of being notified.",
+      "importance_for_flagging": "high",
+      "typical_clause_conflict": "Agreements with a much shorter defect-liability window (e.g., 6 months or 1 year), or that shift defect-repair costs onto the buyer."
+    },
+    {
+      "section_id": "RERA_31",
+      "section_number": "31",
+      "title": "Filing complaints with the RERA Authority",
+      "text": "A buyer can file a complaint directly with the State RERA Authority or an adjudicating officer for any violation of the Act or its rules against a promoter, allottee, or real estate agent — providing a faster, dedicated forum than ordinary civil courts.",
+      "importance_for_flagging": "medium",
+      "typical_clause_conflict": "Useful for the 'next steps' output — tells the user WHERE to actually file a complaint, not just that they have a right."
+    }
+  ],
+  "notes_for_build_team": "RERA only applies to registered projects — a real check worth adding is whether the specific project is actually registered with the State RERA Authority (each state authority publishes a searchable project registry online). If it isn't registered, that itself is a red flag worth surfacing to the buyer, similar to the lease-registration insight from the Registration Act file."
+}

@@ -1,0 +1,51 @@
+{
+  "act_name": "The Indian Contract Act, 1872",
+  "act_number": "9 of 1872",
+  "jurisdiction": "India (Central Act)",
+  "relevance": "Governs which contract clauses are legally void regardless of what the parties signed. This is the key Act for flagging clauses that are simply unenforceable — restraint-of-legal-action clauses, unlawful terms, and excessive/punitive penalty clauses are all common in real rental, employment, and loan agreements.",
+  "primary_source_for_verification": "https://www.indiacode.nic.in (search: Indian Contract Act 1872) or https://indiankanoon.org/doc/1625889/",
+  "last_researched": "2026-09-15",
+  "sections": [
+    {
+      "section_id": "ICA_23",
+      "section_number": "23",
+      "title": "What considerations and objects are lawful, and what not",
+      "text": "The consideration or object of an agreement is unlawful if: it is forbidden by law; or is of such a nature that, if permitted, it would defeat the provisions of any law; or is fraudulent; or involves or implies injury to the person or property of another; or the Court regards it as immoral or opposed to public policy. Every agreement whose object or consideration is unlawful is void.",
+      "importance_for_flagging": "high",
+      "typical_clause_conflict": "Any clause whose effect would be to get around a legal protection the other party has (e.g., forcing a waiver of a statutory right) can be void under this section."
+    },
+    {
+      "section_id": "ICA_24",
+      "section_number": "24",
+      "title": "Agreement void if considerations/objects unlawful in part",
+      "text": "If any part of a single consideration for one or more objects, or any part of any one of several considerations for a single object, is unlawful, the agreement is void — even the lawful part is generally not enforceable unless it can be clearly severed from the unlawful part.",
+      "importance_for_flagging": "medium",
+      "typical_clause_conflict": "Composite clauses bundling a lawful obligation with an unlawful condition, making the whole clause vulnerable to being struck down."
+    },
+    {
+      "section_id": "ICA_27",
+      "section_number": "27",
+      "title": "Agreement in restraint of trade void",
+      "text": "Every agreement by which anyone is restrained from exercising a lawful profession, trade, or business of any kind is void to that extent, subject to a narrow statutory exception for the sale of business goodwill.",
+      "importance_for_flagging": "high",
+      "typical_clause_conflict": "Employment-contract non-compete clauses that broadly forbid an employee from working in the same field after leaving — Indian courts routinely treat such post-employment restraints as void under Section 27."
+    },
+    {
+      "section_id": "ICA_28",
+      "section_number": "28",
+      "title": "Agreements in restraint of legal proceedings void",
+      "text": "An agreement is void to the extent that it: (a) absolutely restricts a party from enforcing their rights under a contract through the normal legal process, or limits the time within which they may do so; or (b) extinguishes the rights of a party, or discharges any party from liability, on the expiry of a specified period, so as to restrict any party from enforcing their rights. (As amended in 1997; narrow exceptions exist for arbitration clauses and bank guarantees.)",
+      "importance_for_flagging": "high",
+      "typical_clause_conflict": "Clauses stating a party 'waives the right to approach any court' or must raise any claim within an unreasonably short window (e.g., '7 days') or lose it entirely — both patterns are void under Section 28 in most circumstances."
+    },
+    {
+      "section_id": "ICA_74",
+      "section_number": "74",
+      "title": "Compensation for breach where penalty is stipulated",
+      "text": "When a contract names a sum to be paid in case of breach, or contains any other penalty stipulation, the party complaining of the breach is entitled to receive reasonable compensation not exceeding the amount named or the penalty stipulated — not necessarily the full penalty amount, regardless of whether actual loss or damage is proven. Courts have consistently interpreted this to mean the named 'penalty' is a ceiling, not an automatic entitlement — only reasonable, loss-proportionate compensation can actually be enforced.",
+      "importance_for_flagging": "high",
+      "typical_clause_conflict": "Clauses claiming the full security deposit, an entire month's salary, or a large fixed 'penalty' is automatically forfeited for a minor breach (e.g., late rent by one day, early lease termination). Section 74 means such a clause is not automatically enforceable at face value — the wronged party can only claim what a court finds reasonable."
+    }
+  ],
+  "notes_for_build_team": "Section 74 is likely your single highest-value section for the rental persona — 'forfeit full deposit' and 'pay X months' rent as penalty' clauses are extremely common and Section 74 directly undercuts blanket enforceability. Verify exact current wording (post-1996/1997 amendments) against indiacode.nic.in before final ingestion."
+}

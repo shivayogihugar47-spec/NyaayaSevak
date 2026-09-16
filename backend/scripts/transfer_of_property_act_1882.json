@@ -1,0 +1,59 @@
+{
+  "act_name": "The Transfer of Property Act, 1882",
+  "act_number": "4 of 1882",
+  "jurisdiction": "India (Central Act)",
+  "relevance": "Governs the fundamental legal rights and liabilities of landlords (lessors) and tenants (lessees) in the absence of a contrary agreement. Section 108 is the default legal position that a rental agreement clause is measured against.",
+  "primary_source_for_verification": "https://www.indiacode.nic.in (search: Transfer of Property Act 1882) or https://indiankanoon.org/doc/1879190/",
+  "last_researched": "2026-09-15",
+  "sections": [
+    {
+      "section_id": "TPA_108_PREAMBLE",
+      "section_number": "108",
+      "title": "Rights and liabilities of lessor and lessee",
+      "text": "In the absence of a contract or local usage to the contrary, the lessor and the lessee of immoveable property, as against one another, possess the rights and are subject to the liabilities set out in clauses (a) through (q) of this section, to the extent applicable to the property leased. These are DEFAULT rules — a written lease can override most of them, which is exactly why a tenant should check whether their agreement has silently removed a right they would otherwise have.",
+      "importance_for_flagging": "high",
+      "typical_clause_conflict": "Any lease clause that removes a lessor's or lessee's default obligation without the tenant realizing it is giving something up."
+    },
+    {
+      "section_id": "TPA_108_a",
+      "section_number": "108(a)",
+      "title": "Lessor's duty to disclose material defects",
+      "text": "The lessor is bound to disclose to the lessee any material defect in the property, connected with its intended use, that the lessor knows of and the lessee does not know of and could not discover with ordinary care.",
+      "importance_for_flagging": "medium",
+      "typical_clause_conflict": "'As-is' clauses that try to waive the landlord's disclosure duty entirely."
+    },
+    {
+      "section_id": "TPA_108_c",
+      "section_number": "108(c)",
+      "title": "Lessee's right to quiet enjoyment",
+      "text": "The lessor is deemed to contract with the lessee that if the lessee pays the rent and performs the lessee's obligations under the lease, the lessee may hold the property for the lease term without interruption from the lessor (the 'covenant of quiet enjoyment').",
+      "importance_for_flagging": "high",
+      "typical_clause_conflict": "Clauses allowing the landlord to enter or interfere with the property without notice or cause, or to interrupt possession outside the agreed eviction process."
+    },
+    {
+      "section_id": "TPA_108_g",
+      "section_number": "108(g)",
+      "title": "Lessee's right to recover payments made on lessor's behalf",
+      "text": "If the lessor neglects to make a payment they are bound to make (and which, if unpaid, is recoverable from the lessee or against the property), the lessee may make that payment and deduct it, with interest, from the rent, or otherwise recover it from the lessor.",
+      "importance_for_flagging": "medium",
+      "typical_clause_conflict": "Clauses that forbid the tenant from ever deducting anything from rent under any circumstances, even lessor defaults."
+    },
+    {
+      "section_id": "TPA_108_l_m",
+      "section_number": "108(l)-(m)",
+      "title": "Lessee's obligation to pay rent and maintain property condition",
+      "text": "The lessee is bound to pay or tender rent at the proper time and place, and is bound to keep — and on termination of the lease, restore — the property in as good condition as when possession was taken, subject to normal wear and tear and to changes caused by irresistible force.",
+      "importance_for_flagging": "medium",
+      "typical_clause_conflict": "Clauses that make the tenant liable for ordinary wear and tear, or that impose restoration standards stricter than the statutory 'reasonable wear and tear' baseline, often used to justify withholding the full security deposit."
+    },
+    {
+      "section_id": "TPA_108_q",
+      "section_number": "108(q)",
+      "title": "Lessee's duty to hand back possession on lease determination",
+      "text": "On determination (ending) of the lease, the lessee is bound to put the lessor into possession of the property.",
+      "importance_for_flagging": "low",
+      "typical_clause_conflict": "Generally not disputed; relevant mainly for overstay/holdover analysis."
+    }
+  ],
+  "notes_for_build_team": "This is a curated subset of Section 108 (clauses a, c, g, l-m, q) selected for relevance to residential rental disputes — not the full clause list (a-q). Expand if the demo persona needs commercial/non-residential coverage. Verify exact wording against indiacode.nic.in or indiankanoon.org before final ingestion — this file is a research summary, not a substitute for the primary source."
+}

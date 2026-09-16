@@ -1,0 +1,37 @@
+# THE TRANSFER OF PROPERTY ACT, 1882
+# Key Sections Governing Leases, Rent, and Tenancy Rights in India
+
+Section 105: Lease Defined
+A lease of immovable property is a transfer of a right to enjoy such property, made for a certain time, express or implied, or in perpetuity, in consideration of a price paid or promised, or of money, a share of crops, service or any other thing of value, to be rendered periodically or on specified occasions to the transferor by the transferee, who accepts the transfer on such terms. The transferor is called the lessor, the transferee is called the lessee, the price is called the premium, and the money, share, service or other thing to be so rendered is called the rent.
+
+Section 106: Duration of certain leases in absence of written contract or local usage
+In the absence of a contract or local law or usage to the contrary, a lease of immovable property for agricultural or manufacturing purposes shall be deemed to be a lease from year to year, terminable, on the part of either lessor or lessee, by six months' notice; and a lease of immovable property for any other purpose (including residential rent agreements) shall be deemed to be a lease from month to month, terminable, on the part of either lessor or lessee, by fifteen days' notice.
+
+Section 107: Leases how made
+A lease of immovable property from year to year, or for any term exceeding one year, or reserving a yearly rent, can be made only by a registered instrument. All other leases of immovable property may be made either by a registered instrument or by oral agreement accompanied by delivery of possession. This means an unregistered rent agreement for 12 months or more is not legally valid as a lease.
+
+Section 108(a): Lessor's duty to disclose material defects
+The lessor is bound to disclose to the lessee any material defect in the property, with reference to its intended use, of which the former is and the latter is not aware, and which the latter could not with ordinary care discover. A landlord cannot hide structural issues or severe water/electricity problems from a tenant before signing the agreement.
+
+Section 108(b): Lessor's duty to put lessee in possession
+The lessor is bound on the lessee's request to put him in possession of the property. The tenant has an absolute right to physical possession once the lease commences.
+
+Section 108(c): Lessee's right to quiet enjoyment
+The lessor shall be deemed to contract with the lessee that, if the latter pays the rent reserved by the lease and performs the contracts binding on the lessee, he may hold the property during the time limited by the lease without interruption. This protects tenants from harassment, illegal lockouts, and unannounced visits by the landlord.
+
+Section 108(m): Lessee's duty to keep property in good condition
+The lessee is bound to keep, and on the termination of the lease to restore, the property in as good condition as it was in at the time when he was put in possession, subject only to the changes caused by reasonable wear and tear or irresistible force. Tenants cannot be charged for "reasonable wear and tear" (like faded paint over years) but must pay for deliberate damages.
+
+Section 108(q): Lessee's duty to hand over possession on termination
+On the determination of the lease, the lessee is bound to put the lessor into possession of the property. Tenants cannot illegally overstay after the lawful termination of the lease.
+
+Section 111: Determination of lease
+A lease of immovable property determines (ends):
+(a) by efflux of the time limited thereby;
+(b) where such time is limited conditionally on the happening of some event—by the happening of such event;
+(c) where the interest of the lessor in the property terminates on, or his power to dispose of the same extends only to, the happening of any event—by the happening of such event;
+(e) by express surrender, that is to say, in case the lessee yields up his interest under the lease to the lessor, by mutual agreement between them;
+(g) by forfeiture (e.g., breaking an express condition which allows reentry, or denial of landlord's title).
+
+Section 114: Relief against forfeiture for non-payment of rent
+Where a lease of immovable property has determined by forfeiture for non-payment of rent, and the lessor sues to eject the lessee, if, at the hearing of the suit, the lessee pays or tenders to the lessor the rent in arrear, together with interest thereon and his full costs of the suit, or gives such security as the Court thinks sufficient for making such payment within fifteen days, the Court may, in lieu of making a decree for ejectment, pass an order relieving the lessee against the forfeiture; and thereupon the lessee shall hold the property leased as if the forfeiture had not occurred. A landlord cannot arbitrarily throw a tenant out the day rent is late; courts allow tenants to cure the default.

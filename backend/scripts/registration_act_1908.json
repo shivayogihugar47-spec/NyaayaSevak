@@ -1,0 +1,27 @@
+{
+  "act_name": "The Registration Act, 1908",
+  "act_number": "16 of 1908",
+  "jurisdiction": "India (Central Act)",
+  "relevance": "Determines whether a rental/lease agreement is even legally enforceable as written. Extremely high real-world relevance: most informal Indian rental agreements are never registered, which quietly undermines the tenant's ability to rely on it in a dispute. This is a strong candidate for a proactive warning your product surfaces even when the user doesn't ask.",
+  "primary_source_for_verification": "https://www.indiacode.nic.in (search: Registration Act 1908) or https://indiankanoon.org/doc/561156/",
+  "last_researched": "2026-09-15",
+  "sections": [
+    {
+      "section_id": "REG_17_1_d",
+      "section_number": "17(1)(d)",
+      "title": "Compulsory registration of leases exceeding one year",
+      "text": "Leases of immovable property from year to year, or for any term exceeding one year, or reserving a yearly rent, must be compulsorily registered. (State governments may exempt leases up to 5 years with annual rent not exceeding ₹50 by gazette notification — largely obsolete given today's rent levels, but technically still on the books.) This aligns with Section 107 of the Transfer of Property Act, which similarly requires such leases to be made only by a registered instrument.",
+      "importance_for_flagging": "very high",
+      "typical_clause_conflict": "This is a document-level check, not a clause-level one: if the uploaded agreement's stated term is more than 11 months (the common workaround) or otherwise exceeds one year and there's no indication it was registered, the product should proactively flag this as a structural risk to the tenant — not just analyze individual clauses within it."
+    },
+    {
+      "section_id": "REG_49",
+      "section_number": "49",
+      "title": "Effect of non-registration",
+      "text": "A document that is compulsorily registrable under Section 17 but was not registered cannot be used to affect the immovable property it concerns, and generally cannot be admitted as evidence of any transaction affecting that property in court — with narrow exceptions (e.g., as evidence in a suit for specific performance, or as evidence of a collateral transaction not itself required to be registered).",
+      "importance_for_flagging": "very high",
+      "typical_clause_conflict": "Explains WHY an unregistered long-term lease is risky: the tenant may not be able to rely on the written terms at all in a dispute, even if the landlord clearly breached them, because the document itself may be inadmissible as proof of the lease terms."
+    }
+  ],
+  "notes_for_build_team": "This is the reason so many Indian rental agreements are deliberately written as '11 months, renewable' — to dodge the Section 17 registration requirement (which triggers at 'exceeding one year'). Consider making this a specific, proactive insight your product surfaces: detect the stated lease term, and if it's an 11-month renewable structure, explain to the user that this is a common workaround and what it does and doesn't protect them from — this is a genuinely differentiating, non-obvious insight most users won't know to ask about."
+}

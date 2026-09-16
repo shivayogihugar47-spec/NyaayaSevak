@@ -1,0 +1,27 @@
+{
+  "act_name": "The Negotiable Instruments Act, 1881",
+  "act_number": "26 of 1881",
+  "jurisdiction": "India (Central Act)",
+  "relevance": "Governs what happens when a cheque bounces — directly relevant whenever rent, EMI, loan repayment, or a security-deposit refund is paid or promised by cheque. Useful for the chat/Q&A feature and for the checklist's 'next steps' output when a user describes a bounced payment.",
+  "primary_source_for_verification": "https://www.indiacode.nic.in (search: Negotiable Instruments Act 1881) or https://indiankanoon.org",
+  "last_researched": "2026-09-15",
+  "sections": [
+    {
+      "section_id": "NI_138",
+      "section_number": "138",
+      "title": "Dishonour of cheque for insufficiency of funds",
+      "text": "If a cheque is returned unpaid by the bank because the account has insufficient funds, or the amount exceeds the arrangement made with the bank, this is a criminal offence, punishable with imprisonment up to 2 years, a fine up to twice the cheque amount, or both — but ONLY if the strict procedure below is followed.",
+      "importance_for_flagging": "high",
+      "typical_clause_conflict": "Not a clause-conflict check — this is a procedural/Q&A section. Useful when a user asks 'my landlord's cheque for my deposit refund bounced, what can I do?' or 'my tenant's rent cheque bounced'."
+    },
+    {
+      "section_id": "NI_138_procedure",
+      "section_number": "138 (procedure, via provisos)",
+      "title": "Mandatory procedure and strict deadlines",
+      "text": "To pursue a Section 138 case, the payee must follow this exact sequence: (1) Present the cheque to the bank within its validity period — 3 months from the date on the cheque. (2) If dishonoured, the bank issues a 'Return Memo' stating the reason. (3) The payee must send a written legal notice demanding payment to the drawer within 30 days of receiving the Return Memo. (4) The drawer then has 15 days from receiving that notice to pay. (5) Only if payment is not made within those 15 days can the payee file a criminal complaint — and that complaint itself must generally be filed within 30 days after the 15-day window expires. Missing any of these deadlines, even by one day, can result in the case being dismissed on technical grounds regardless of the merits.",
+      "importance_for_flagging": "high",
+      "typical_clause_conflict": "This is the single most useful section for your 'next steps' checklist output whenever a bounced cheque comes up in chat — the deadlines are unforgiving and most users don't know them, so proactively stating the exact dates (given when the return memo was received) is high-value, concrete help."
+    }
+  ],
+  "notes_for_build_team": "This section is a strong candidate for a 'deadline calculator' feature in chat: if the user states when they received the bank's Return Memo, the AI can calculate and state the exact date the 30-day notice deadline falls on, and the exact date the 15-day payment window would end if a notice were sent today. This is a concrete, differentiating output beyond just explaining the law."
+}

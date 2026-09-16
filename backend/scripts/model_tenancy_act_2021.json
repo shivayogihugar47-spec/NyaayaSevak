@@ -1,0 +1,59 @@
+{
+  "act_name": "The Model Tenancy Act, 2021",
+  "act_type": "Central Model Law (not directly binding — states must adopt/adapt it into their own legislation)",
+  "jurisdiction": "India — model/template law approved by the Union Cabinet on 2 June 2021, for adoption by individual states",
+  "relevance": "The most specific and modern source for rental-agreement fairness benchmarks — security deposit caps, rent-hike notice, maintenance allocation, and eviction grounds. IMPORTANT CAVEAT: this is a MODEL law. It is only legally binding in states that have actually enacted it (or an equivalent state law) — the UI must clearly label this as 'model law, verify local adoption' rather than presenting it as automatically binding nationwide.",
+  "primary_source_for_verification": "https://prsindia.org/billtrack/the-model-tenancy-act-2021 and official state gazette notifications for actual adoption status",
+  "last_researched": "2026-09-15",
+  "sections": [
+    {
+      "section_id": "MTA_11",
+      "section_number": "11",
+      "title": "Cap on security deposit",
+      "text": "The security deposit paid by the tenant in advance shall not exceed two months' rent for residential premises, and shall not exceed six months' rent for non-residential premises. The deposit must be refunded to the tenant by the landlord on the date of taking back vacant possession, after making due deductions for any tenant liability.",
+      "importance_for_flagging": "high",
+      "typical_clause_conflict": "Rental agreements demanding a security deposit of 6, 10, or even 12 months' rent for a residential property — extremely common in several Indian cities and directly exceeds this benchmark in states that have adopted the Act."
+    },
+    {
+      "section_id": "MTA_rent_revision",
+      "section_number": "(rent revision provisions)",
+      "title": "Notice period for rent increase",
+      "text": "The landlord cannot increase rent during the agreed tenancy period unless the rental agreement itself provides for it. Any rent revision requires the landlord to give the tenant at least three months' (90 days) advance written notice.",
+      "importance_for_flagging": "high",
+      "typical_clause_conflict": "Clauses allowing the landlord to raise rent 'at any time' or with less than 90 days' notice, or with no notice period specified at all."
+    },
+    {
+      "section_id": "MTA_21",
+      "section_number": "21",
+      "title": "Grounds for eviction",
+      "text": "A tenant may only be evicted by the landlord through the Rent Court/Rent Authority process, and only on specific listed grounds, including: (a) refusal to pay the agreed rent; (b) failure to pay rent arrears/dues in full for more than two consecutive months; (c) subletting/parting with possession of all or part of the premises without the landlord's written consent; (d) continued misuse of the premises even after a written notice from the landlord to stop.",
+      "importance_for_flagging": "high",
+      "typical_clause_conflict": "Clauses allowing the landlord to evict the tenant 'at will', 'without notice', or 'for any reason' with immediate effect — bypassing the Rent Authority process and the listed grounds entirely."
+    },
+    {
+      "section_id": "MTA_maintenance",
+      "section_number": "(maintenance allocation provisions)",
+      "title": "Division of repair and maintenance responsibilities",
+      "text": "Landlords are generally responsible for structural repairs, whitewashing of walls and doors, and major plumbing. Tenants are generally responsible for routine upkeep such as drain cleaning, minor fixture repairs (e.g., taps, geysers), and day-to-day maintenance. If the tenant does the landlord's repair work after the landlord refuses, the tenant may deduct the cost from rent, capped at 50% of the monthly rent per month.",
+      "importance_for_flagging": "medium",
+      "typical_clause_conflict": "Clauses making the tenant solely responsible for ALL repairs including structural ones, which shifts a landlord's default obligation onto the tenant."
+    },
+    {
+      "section_id": "MTA_entry_notice",
+      "section_number": "(entry/inspection provisions)",
+      "title": "Landlord's right of entry requires notice",
+      "text": "The landlord (or their agent) must give the tenant at least 24 hours' advance notice before entering the premises for inspection or repairs, except in genuine emergencies (fire, flood, earthquake, or similar natural calamity), where entry without notice is permitted.",
+      "importance_for_flagging": "medium",
+      "typical_clause_conflict": "Clauses allowing the landlord unrestricted entry 'at any time' without any notice requirement."
+    },
+    {
+      "section_id": "MTA_overstay_penalty",
+      "section_number": "(holdover/overstay provisions)",
+      "title": "Penalty for tenant overstaying after tenancy ends",
+      "text": "If a tenant fails to vacate after the tenancy ends (and it isn't renewed) or after a termination order, the tenant must pay twice the monthly rent for the first two months of overstay, and four times the monthly rent for any period after that, until they vacate.",
+      "importance_for_flagging": "low",
+      "typical_clause_conflict": "Mainly useful for answering tenant Q&A about consequences of overstaying, rather than flagging landlord-drafted clauses."
+    }
+  ],
+  "notes_for_build_team": "CRITICAL: label every citation from this Act in the UI as coming from a 'model law' with a one-line note that binding effect depends on state adoption — do not let the AI present this as automatically-enforceable central law without that caveat, or you risk giving users incorrect confidence about their actual legal position. Check current adoption status by state before the demo if you want to name a specific state as compliant."
+}

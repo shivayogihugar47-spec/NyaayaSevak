@@ -1,0 +1,35 @@
+{
+  "act_name": "The Limitation Act, 1963",
+  "act_number": "36 of 1963",
+  "jurisdiction": "India (Central Act)",
+  "relevance": "Governs how long someone has to file a lawsuit after a legal wrong occurs. This applies ACROSS every document type in your knowledge base (rental, employment, consumer, property) — it's the answer to 'can I still do something about this?' which is one of the most common real questions a user will ask in the chat/Q&A feature, regardless of which specific document they uploaded.",
+  "primary_source_for_verification": "https://www.indiacode.nic.in (search: Limitation Act 1963) or https://indiankanoon.org",
+  "last_researched": "2026-09-15",
+  "sections": [
+    {
+      "section_id": "LIM_ART_55",
+      "section_number": "Article 55 (Schedule)",
+      "title": "Limitation period for breach of contract",
+      "text": "A suit for compensation for the breach of any contract (not otherwise specifically covered elsewhere in the Act) must be filed within 3 years. The 3-year clock starts when the contract is broken — or, if there were successive breaches, from the date of the most recent breach — or, for a continuing breach, from the date the breach ceased (a fresh limitation period restarts at every moment a continuing breach continues, per Section 22).",
+      "importance_for_flagging": "high",
+      "typical_clause_conflict": "This is the DEFAULT time limit — directly relevant to flagging Indian Contract Act Section 28 violations (clauses that try to impose a shorter time limit than this statutory default, e.g. 'any claim must be raised within 7 days', are themselves void under Section 28)."
+    },
+    {
+      "section_id": "LIM_ART_113",
+      "section_number": "Article 113 (Schedule)",
+      "title": "Residual limitation period",
+      "text": "For any suit where no other specific limitation period is prescribed elsewhere in the Act's schedule, the limitation period is 3 years from when the right to sue first arises (accrues).",
+      "importance_for_flagging": "medium",
+      "typical_clause_conflict": "The fallback rule for document-related disputes not squarely covered by Article 55 or another specific provision — generally lands at the same 3-year answer as Article 55 for contract-adjacent claims."
+    },
+    {
+      "section_id": "LIM_SEC_3",
+      "section_number": "3",
+      "title": "Bar of limitation",
+      "text": "Every suit, appeal, or application filed after the prescribed limitation period must be dismissed, even if the defendant does not specifically raise the limitation defence — the court applies this rule on its own.",
+      "importance_for_flagging": "low",
+      "typical_clause_conflict": "Background rule explaining WHY hitting the deadline matters so much — it's not just a technicality the other side has to raise, courts enforce it automatically."
+    }
+  ],
+  "notes_for_build_team": "For the chat/Q&A feature, this Act is the right source whenever a user asks some version of 'is it too late for me to do anything?' — combine the relevant document's facts (when did the breach happen) with Article 55's 3-year rule to give a concrete, dated answer, similar to the NI Act deadline-calculator idea. This is one of the highest-leverage sections in your whole knowledge base precisely because it applies to every document type, not just one persona."
+}

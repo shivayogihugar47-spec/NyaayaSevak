@@ -1,0 +1,35 @@
+{
+  "act_name": "The Payment of Wages Act, 1936",
+  "act_number": "4 of 1936",
+  "jurisdiction": "India (Central Act) — applies to employees earning up to a wage ceiling (₹24,000/month as of the 2017 amendment) in specified industries (factories, railways, and establishments notified by the appropriate government)",
+  "relevance": "Governs employment offer letters/contracts — specifically what an employer can legally deduct from wages and how quickly wages must be paid. Directly useful for flagging exploitative deduction clauses.",
+  "primary_source_for_verification": "https://www.indiacode.nic.in (search: Payment of Wages Act 1936) or https://indiankanoon.org/doc/392051/",
+  "last_researched": "2026-09-15",
+  "sections": [
+    {
+      "section_id": "PWA_4_5",
+      "section_number": "4-5",
+      "title": "Timely payment of wages",
+      "text": "Wages must be paid within a fixed wage period not exceeding one month. Establishments with fewer than 1,000 employees must pay wages within 7 days after the end of the wage period; establishments with 1,000 or more employees have 10 days.",
+      "importance_for_flagging": "high",
+      "typical_clause_conflict": "Employment contracts that specify wage payment dates beyond these statutory windows, or leave payment timing vague/at the employer's discretion."
+    },
+    {
+      "section_id": "PWA_7",
+      "section_number": "7",
+      "title": "Deductions from wages — general rule",
+      "text": "Wages must be paid without any deductions except those specifically authorised by this Act. Section 7(2) provides an exhaustive list of permitted deduction types — fines, absence from duty, damage/loss of goods entrusted to the employee (only where directly due to the employee's neglect), house-accommodation, recovery of advances, and a small number of other specified categories. Deductions outside this list are not permitted regardless of what the employment contract says.",
+      "importance_for_flagging": "very high",
+      "typical_clause_conflict": "Any clause authorizing open-ended deductions ('any losses caused to the company', 'any amount at management's discretion') — these are void to the extent they exceed the Act's closed list of permitted deduction categories."
+    },
+    {
+      "section_id": "PWA_7_3",
+      "section_number": "7(3)",
+      "title": "Cap on total deductions",
+      "text": "Total deductions in any wage period cannot exceed 75% of wages where deductions are wholly or partly for payments to a co-operative society, and cannot exceed 50% of wages in other cases.",
+      "importance_for_flagging": "high",
+      "typical_clause_conflict": "Clauses permitting deduction of more than half the employee's wages in a given period (e.g. for 'training bond' recovery, penalties, or advance recovery) without a stated cap."
+    }
+  ],
+  "notes_for_build_team": "Note the wage ceiling for coverage (₹24,000/month as of the last amendment) — verify this figure is still current before the demo, as wage ceilings under this Act have been periodically revised by government notification. If your demo employment contract involves a higher-salaried role, flag this Act may not directly apply and the analysis should note that caveat rather than presenting it as certain."
+}
