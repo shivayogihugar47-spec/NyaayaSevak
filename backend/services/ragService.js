@@ -313,7 +313,25 @@ async function generateLawyerQuestions(documentRisks, clauseAnalyses) {
   const lowConfidence = clauseAnalyses.filter(c => c.analysis.confidence_level === 'Low');
   const mediumRisk = clauseAnalyses.filter(c => c.analysis.risk_level === 'Medium');
 
-  const prompt = `You are a senior advocate preparing a client for a formal consultation with a lawyer regarding a rental/contract agreement.
+  // Collect verified citations present in the analyzed clauses & document risks
+  const verifiedCitations = new Set();
+  clauseAnalyses.forEach(c => {
+    if (c.analysis.cited_law && c.analysis.cited_law !== 'None' && c.analysis.cited_law !== 'Safe') {
+      verifiedCitations.add(c.analysis.cited_law);
+    }
+  });
+  documentRisks.forEach(r => {
+    if (r.description.includes('Registration Act') || r.title.includes('Registration')) {
+      verifiedCitations.add('Registration Act, 1908, Section 17');
+    }
+  });
+
+  const verifiedCitationsList = Array.from(verifiedCitations).join('; ') || 'None specifically cited';
+
+  const prompt = `You are a legal advisor helping a non-lawyer client prepare simple, direct questions to ask their advocate during a legal consultation.
+
+Verified Citations Found in Document Analysis:
+${verifiedCitationsList}
 
 Document-Level Risks Found:
 ${JSON.stringify(documentRisks, null, 2)}
@@ -324,19 +342,19 @@ ${JSON.stringify(highRisk.map(c => ({ clause_id: c.id, text: c.text, category: c
 Medium-Severity & Low-Confidence Items:
 ${JSON.stringify([...mediumRisk, ...lowConfidence].map(c => ({ clause_id: c.id, text: c.text, category: c.analysis.category, issue: c.analysis.legal_issue, confidence: c.analysis.confidence_level })), null, 2)}
 
-Generate 3 to 4 highly targeted, professional questions for the client to ask their advocate during a legal consultation.
+Generate 3 to 4 short, clear questions for the client to ask their advocate during a consultation.
 
 CRITICAL RULES:
-1. Questions must read as genuine consultation prep (e.g., asking about statutory remedies, court enforceability, state-specific amendments, or structuring addendums).
-2. DO NOT generate draft messages/emails to the landlord or negotiation dialogue.
-3. Explicitly reference relevant statutory provisions (e.g. Section 74 of the Indian Contract Act, 1872 for penalty forfeiture, Section 17 of the Registration Act, 1908 for 11-month leases, or Model Tenancy Act adoption status) where applicable.
+1. STRICT GROUNDING: You MUST ONLY reference section numbers or Act names that appear in the "Verified Citations Found in Document Analysis" list above. DO NOT invent, hallucinate, or cite any other Acts or section numbers (e.g. do NOT cite Specific Relief Act, Civil Procedure Code, or any law not in the verified list). If you mention a legal strategy concept (like an addendum or court protection), describe it in plain English without citing unverified section numbers.
+2. PLAIN & DIRECT PHRASING: Write each question in plain, simple, spoken English that a non-lawyer client can easily read out loud in a meeting. Keep it short and ask ONE clear question per topic.
+3. CONTEXT SEPARATION: Keep detailed legal reasoning and statutory citations in the separate "context" field — do NOT pack long legal jargon into the question text.
 4. Output ONLY a strictly valid JSON object matching this schema:
 {
   "questions": [
     {
-      "topic": "Short topic (e.g. 'Penalty Clause Enforceability')",
-      "question": "The precise, professional question to ask the advocate.",
-      "context": "Brief explanation of why this question is necessary based on the flagged clause or document risk."
+      "topic": "Short 2-4 word topic (e.g. 'Deposit Forfeiture')",
+      "question": "Plain, short, direct question a client can ask out loud.",
+      "context": "Explanation of why to ask this, referencing the verified citation."
     }
   ]
 }`;
@@ -359,7 +377,7 @@ CRITICAL RULES:
     return [
       {
         topic: "Clause Enforceability",
-        question: "Are the penalty and immediate eviction clauses legally enforceable under local state tenancy laws?",
+        question: "Are the penalty and immediate eviction clauses legally enforceable in court?",
         context: "Multiple high-risk clauses were identified in the agreement."
       }
     ];
