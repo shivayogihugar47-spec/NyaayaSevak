@@ -430,6 +430,223 @@ async function generateSummaryChecklist(documentRisks, clauseAnalyses) {
   };
 }
 
+/**
+ * Generate proactive spoken briefing for voice call start
+ * Uses documentRisks + top 2 highest-severity flagged clauses
+ */
+async function generateVoiceBriefing(documentRisks = [], clauseAnalyses = []) {
+  const highRisk = clauseAnalyses.filter(c => c.analysis && c.analysis.risk_level === 'High');
+  const mediumRisk = clauseAnalyses.filter(c => c.analysis && c.analysis.risk_level === 'Medium');
+  const topClauses = [...highRisk, ...mediumRisk].slice(0, 2);
+
+  const topRisksSummary = {
+    documentRisks: documentRisks.map(r => ({ title: r.title, description: r.description })),
+    flaggedClauses: topClauses.map(c => ({
+      clauseId: c.id,
+      category: c.analysis.category,
+      issue: c.analysis.legal_issue,
+      cited_law: c.analysis.cited_law,
+      risk_level: c.analysis.risk_level
+    }))
+  };
+
+  const prompt = `You are NyayaCheck Voice Assistant speaking directly to a user over a phone/voice call.
+Create a short, engaging, 2-3 sentence spoken opening briefing for the user about their contract.
+
+Document Analysis Data:
+${JSON.stringify(topRisksSummary, null, 2)}
+
+Rules:
+1. Start directly with a warm, professional greeting and state the main findings immediately.
+2. Mention 1 primary document risk (if any, like 11-month lease registration) and up to 2 top clause red flags.
+3. Keep it conversational, spoken-friendly, clear, and under 60 words so it sounds natural when spoken aloud.
+4. End by inviting the user to ask questions about any clause or law.`;
+
+  try {
+    const response = await openrouter.chat.send({
+      chatRequest: {
+        model: MODEL,
+        messages: [{ role: 'user', content: prompt }]
+      }
+    });
+
+    const briefingText = response.choices[0].message.content.trim();
+    
+    // Collect sources present in top briefing
+    const sources = [];
+    topClauses.forEach(c => {
+      if (c.analysis && c.analysis.cited_law && c.analysis.cited_law !== 'None') {
+        sources.push({ type: 'law', reference: c.analysis.cited_law });
+      }
+      sources.push({ type: 'clause', reference: `Clause ${c.id}: ${c.analysis.category}` });
+    });
+    if (documentRisks.some(r => r.title.includes('Registration'))) {
+      sources.push({ type: 'law', reference: 'Registration Act 1908, Sec 17' });
+    }
+
+    return {
+      briefing: briefingText,
+      topRisksSummary,
+      sources
+    };
+  } catch (err) {
+    console.error("Voice briefing generation error:", err);
+    return {
+      briefing: "Hello! I've reviewed your agreement. I found a few key areas that require your attention, including security deposit terms and lease duration risks. What specific clause would you like me to explain?",
+      sources: []
+    };
+  }
+}
+
+/**
+ * Tool: getClauseDetail(session, clauseId)
+ */
+async function getClauseDetail(session, clauseIdQuery) {
+  if (!session || !session.clauses) {
+    return { error: "Session or clauses not found." };
+  }
+
+  // Handle various clause ID formats (e.g. "clause_1", "1", "Clause 2", 2)
+  const normalizedQuery = String(clauseIdQuery).toLowerCase().replace(/[^0-9]/g, '');
+  
+  let targetClause = session.clauses.find(c => {
+    const normId = String(c.id).toLowerCase().replace(/[^0-9]/g, '');
+    return normId === normalizedQuery || String(c.id).toLowerCase() === String(clauseIdQuery).toLowerCase();
+  });
+
+  if (!targetClause && session.clauses.length > 0) {
+    // Fallback: try by index (1-based or 0-based)
+    const idx = parseInt(normalizedQuery, 10);
+    if (!isNaN(idx) && idx > 0 && idx <= session.clauses.length) {
+      targetClause = session.clauses[idx - 1];
+    }
+  }
+
+  if (!targetClause) {
+    return { 
+      found: false, 
+      message: `Clause '${clauseIdQuery}' was not found in this document. Total clauses available: ${session.clauses.length}.`
+    };
+  }
+
+  let analysis = session.flags ? session.flags[targetClause.id] : null;
+  if (!analysis) {
+    analysis = await processClause(targetClause.text);
+    if (session.flags) session.flags[targetClause.id] = analysis;
+  }
+
+  const sourceList = [
+    { type: 'clause', reference: `Clause ${targetClause.id}: ${analysis.category}` }
+  ];
+  if (analysis.cited_law && analysis.cited_law !== 'None' && analysis.cited_law !== 'Safe') {
+    sourceList.push({ type: 'law', reference: analysis.cited_law });
+  }
+
+  return {
+    found: true,
+    clauseId: targetClause.id,
+    clauseText: targetClause.text,
+    category: analysis.category,
+    risk_level: analysis.risk_level,
+    in_simple_terms: analysis.in_simple_terms,
+    legal_issue: analysis.legal_issue,
+    cited_law: analysis.cited_law,
+    recommended_action: analysis.recommended_action,
+    sources: sourceList
+  };
+}
+
+/**
+ * Tool: getDocumentRisks(session)
+ */
+async function getDocumentRisks(session) {
+  if (!session) return { error: "Session not found." };
+  const risks = session.documentRisks || [];
+  const sources = [];
+  risks.forEach(r => {
+    if (r.title.includes('11-Month') || r.description.includes('Registration Act')) {
+      sources.push({ type: 'law', reference: 'Registration Act 1908, Sec 17' });
+    }
+  });
+
+  return {
+    documentRisks: risks,
+    sources
+  };
+}
+
+/**
+ * Tool: getLawCitation(actQuery, sectionQuery)
+ */
+async function getLawCitation(actQuery, sectionQuery) {
+  let act = (actQuery || '').trim();
+  let section = (sectionQuery || '').trim();
+
+  // Extract section number if embedded in actQuery (e.g. "Section 74")
+  if (!section && act.match(/section\s*(\d+)/i)) {
+    const m = act.match(/section\s*(\d+)/i);
+    section = m[1];
+  }
+
+  const rawSectionDigits = section.replace(/[^0-9]/g, '');
+  let retrievedLaws = [];
+
+  // 1. Attempt exact/structured section number lookup first
+  if (rawSectionDigits) {
+    try {
+      const res = await queryWithRetry(`
+        SELECT act_name, section_number, content
+        FROM law_chunks
+        WHERE (section_number ILIKE $1 OR content ILIKE $2)
+        ORDER BY id ASC
+        LIMIT 3
+      `, [`%${rawSectionDigits}%`, `%Section ${rawSectionDigits}:%`]);
+      retrievedLaws = res.rows;
+    } catch (err) {
+      console.error("Direct section lookup error:", err.message);
+    }
+  }
+
+  // 2. Fallback to vector similarity search if direct lookup yields no results
+  if (retrievedLaws.length === 0) {
+    const searchTerm = `${act} ${section}`.trim();
+    if (!searchTerm) {
+      return { error: "Act or section query required." };
+    }
+    const embeddingStr = await getRealEmbedding(searchTerm);
+    try {
+      const res = await queryWithRetry(`
+        SELECT act_name, section_number, content, 
+               1 - (embedding <=> $1) as similarity
+        FROM law_chunks
+        WHERE 1 - (embedding <=> $1) >= 0.25
+        ORDER BY similarity DESC
+        LIMIT 3
+      `, [embeddingStr]);
+      retrievedLaws = res.rows;
+    } catch (err) {
+      console.error("getLawCitation DB search error:", err.message);
+    }
+  }
+
+  const sources = retrievedLaws.map(l => ({
+    type: 'law',
+    reference: `${l.act_name}, Section ${l.section_number}`
+  }));
+
+  return {
+    query: `${act} ${section}`.trim(),
+    foundCount: retrievedLaws.length,
+    citations: retrievedLaws.map(l => ({
+      act: l.act_name,
+      section: l.section_number,
+      content: l.content
+    })),
+    sources
+  };
+}
+
+
 module.exports = {
   processClause,
   generateChatResponse,
@@ -437,5 +654,10 @@ module.exports = {
   compareDocuments,
   analyzeDocumentLevelRisks,
   generateLawyerQuestions,
-  generateSummaryChecklist
+  generateSummaryChecklist,
+  generateVoiceBriefing,
+  getClauseDetail,
+  getDocumentRisks,
+  getLawCitation
 };
+

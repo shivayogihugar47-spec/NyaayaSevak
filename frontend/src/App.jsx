@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { UploadCloud, ShieldAlert, CheckCircle2, ChevronRight, FileText, MessageSquare, Send, X, ArrowLeftRight, AlertTriangle, Loader2, Copy, Printer, HelpCircle } from 'lucide-react';
+import { UploadCloud, ShieldAlert, CheckCircle2, ChevronRight, FileText, MessageSquare, Send, X, ArrowLeftRight, AlertTriangle, Loader2, Copy, Printer, HelpCircle, Mic } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import LandingPage from './LandingPage';
+import VoicePanel from './VoicePanel';
+
 
 function App() {
   const [view, setView] = useState('landing'); // 'landing' or 'app'
@@ -49,9 +51,11 @@ function App() {
   const [textB, setTextB] = useState('');
   const [compareResults, setCompareResults] = useState(null);
 
-  // Chat state
+  // Chat & Voice state
   const [chatOpen, setChatOpen] = useState(false);
+  const [voiceOpen, setVoiceOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([
+
     { role: 'assistant', content: 'Hi! Ask me any questions about your document or the laws we found.' }
   ]);
   const [chatInput, setChatInput] = useState('');
@@ -306,13 +310,22 @@ function App() {
                     <FileText className="w-5 h-5 text-indigo-400" />
                     Document Clauses
                   </h3>
-                  <button 
-                    onClick={() => setChatOpen(!chatOpen)}
-                    className="flex items-center gap-2 text-sm bg-indigo-500/20 text-indigo-300 px-3 py-1.5 rounded-lg hover:bg-indigo-500/30 transition-colors"
-                  >
-                    <MessageSquare className="w-4 h-4" /> Ask AI
-                  </button>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => setVoiceOpen(true)}
+                      className="flex items-center gap-1.5 text-sm bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 px-3 py-1.5 rounded-lg transition-colors font-medium border border-purple-500/30"
+                    >
+                      <Mic className="w-4 h-4 text-purple-400" /> Voice AI
+                    </button>
+                    <button 
+                      onClick={() => setChatOpen(!chatOpen)}
+                      className="flex items-center gap-1.5 text-sm bg-indigo-500/20 text-indigo-300 px-3 py-1.5 rounded-lg hover:bg-indigo-500/30 transition-colors font-medium border border-indigo-500/30"
+                    >
+                      <MessageSquare className="w-4 h-4" /> Ask AI
+                    </button>
+                  </div>
                 </div>
+
 
                 {session.clauses.map(clause => (
                   <div 
@@ -752,9 +765,21 @@ function App() {
             </motion.div>
           )}
         </AnimatePresence>
+
+
+        {/* Voice AI Panel Modal */}
+        <AnimatePresence>
+          {voiceOpen && session && (
+            <VoicePanel 
+              sessionId={session.sessionId} 
+              onClose={() => setVoiceOpen(false)} 
+            />
+          )}
+        </AnimatePresence>
       </main>
     </div>
   );
 }
+
 
 export default App;

@@ -12,6 +12,7 @@
   "dependencies": {
     "@tailwindcss/typography": "^0.5.20",
     "@tailwindcss/vite": "^4.3.3",
+    "@vapi-ai/web": "^2.7.0",
     "axios": "^1.20.0",
     "framer-motion": "^13.3.0",
     "lucide-react": "^1.46.0",

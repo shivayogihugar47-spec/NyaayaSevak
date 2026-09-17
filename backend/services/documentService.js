@@ -107,25 +107,40 @@ async function extractText(buffer, mimetype) {
  * Here we use a heuristic based on numbered lists or paragraphs.
  */
 function segmentClauses(text) {
-  // First normalize newlines to single spaces to handle OCR jumble
-  let normalizedText = text.replace(/\r?\n/g, ' ');
+  let rawSegments = [];
   
-  // Split by numbered lists: looks for " 1. ", " 2. ", or start of string "1. "
-  // using a positive lookahead for a word boundary, digits, a dot, and a space.
-  const rawSegments = normalizedText.split(/(?=\b\d+\.\s)/);
-  
-  // Clean up segments and filter out very short junk (like standalone headers)
-  const cleanedSegments = rawSegments
-    .map(p => p.trim())
-    .filter(p => p.length > 20);
-    
-  const clauses = cleanedSegments.map((para, index) => ({
-    id: `clause_${index + 1}`,
-    text: para
-  }));
+  // 1. Check if text has explicit CLAUSE X or SECTION X headers
+  if (/CLAUSE\s+\d+|SECTION\s+\d+/i.test(text)) {
+    rawSegments = text.split(/(?=\b(?:CLAUSE|SECTION)\s+\d+)/i);
+  } 
+  // 2. Check if text has double-newline paragraph breaks
+  else if (/\n\s*\n/.test(text)) {
+    rawSegments = text.split(/\n\s*\n/);
+  } 
+  // 3. Fallback: split on line starts with numbered list items like "\n1. "
+  else {
+    rawSegments = text.split(/(?=\n\s*\d+\.\s)/);
+  }
 
-  return clauses;
+  const cleaned = rawSegments
+    .map(p => p.trim())
+    .filter(p => p.length > 15);
+
+  if (cleaned.length === 0) {
+    return [{ id: 'clause_1', text: text.trim() }];
+  }
+
+  return cleaned.map((para, index) => {
+    const headerMatch = para.match(/^(?:CLAUSE|SECTION)\s+(\d+)/i);
+    const id = headerMatch ? `clause_${headerMatch[1]}` : `clause_${index + 1}`;
+    return {
+      id,
+      text: para
+    };
+  });
 }
+
+
 
 module.exports = {
   extractText,

@@ -6,9 +6,8 @@ const ragService = require('../services/ragService');
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
-// Stores session analysis in memory for the demo
-// In production, this would be in the database
-const sessionStore = {};
+const { sessionStore } = require('../services/sessionStore');
+
 
 /**
  * POST /api/upload
