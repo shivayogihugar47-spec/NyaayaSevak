@@ -132,6 +132,8 @@ router.post('/webhook', async (req, res) => {
       if (functionName === 'getClauseDetail') {
         const clauseId = rawArgs.clause_id || rawArgs.clauseId || rawArgs.id;
         toolResult = await ragService.getClauseDetail(session, clauseId);
+      } else if (functionName === 'explainDocumentOverview') {
+        toolResult = await ragService.getClauseDetail(session, 'all');
       } else if (functionName === 'getDocumentRisks') {
         toolResult = await ragService.getDocumentRisks(session);
       } else if (functionName === 'getLawCitation') {
@@ -147,9 +149,10 @@ router.post('/webhook', async (req, res) => {
         voiceSourcesStore[sessionId] = toolResult.sources;
       }
 
+      const toolCallId = toolCall.id || toolCall.toolCallId || toolCall.functionCallId || ('call_' + Date.now());
 
       results.push({
-        toolCallId: toolCall.id,
+        toolCallId: toolCallId,
         result: JSON.stringify(toolResult)
       });
     }
@@ -189,15 +192,40 @@ router.post('/assistant-config', async (req, res) => {
     }
 
     const languageConfigMap = {
-      en: { provider: "deepgram", model: "nova-2", language: "en" },
-      hi: { provider: "deepgram", model: "nova-2", language: "hi" },
-      kn: { provider: "talkscriber", model: "whisper" }
+      en: {
+        transcriber: { provider: "deepgram", model: "nova-2", language: "en" },
+        voice: { provider: "azure", voiceId: "en-US-AndrewNeural" }
+      },
+      hi: {
+        transcriber: { provider: "deepgram", model: "nova-2", language: "hi" },
+        voice: { provider: "azure", voiceId: "hi-IN-SwaraNeural" }
+      },
+      kn: {
+        transcriber: { provider: "deepgram", model: "nova-2", language: "kn" },
+        voice: { provider: "azure", voiceId: "kn-IN-SapnaNeural" }
+      }
     };
     
-    const transcriberConfig = languageConfigMap[language] || languageConfigMap.en;
+    const langConfig = languageConfigMap[language] || languageConfigMap.en;
+    const transcriberConfig = langConfig.transcriber;
+    const voiceConfig = langConfig.voice;
     
-    // Server Webhook URL configuration (uses process.env.PUBLIC_URL or default server endpoint)
+    // Server Webhook URL configuration
     const serverUrl = process.env.VAPI_WEBHOOK_URL || process.env.PUBLIC_URL || "http://localhost:3001/api/voice/webhook";
+
+    // Format full document context for system prompt
+    const documentClausesText = session.clauses.map(c => {
+      const flag = session.flags ? session.flags[c.id] : null;
+      return `Clause ${c.id}: "${c.text}" ${flag ? `[Risk: ${flag.risk_level}, Category: ${flag.category}, Summary: ${flag.in_simple_terms}, Legal Issue: ${flag.legal_issue}]` : ''}`;
+    }).join('\n\n');
+
+    const documentRisksText = (session.documentRisks || []).map(r => `- ${r.title} (${r.risk_level} Risk): ${r.description}`).join('\n');
+
+    const languagePrompts = {
+      en: "Respond fluently in natural spoken English.",
+      hi: "Respond fluently in natural spoken Hindi (हिंदी). Preserve exact clause numbers and statutory legal terms.",
+      kn: "Respond fluently in natural spoken Kannada (ಕನ್ನಡ). Preserve exact clause numbers and statutory legal terms."
+    };
 
     const assistantConfig = {
       name: "NyayaCheck Legal Assistant",
@@ -209,14 +237,36 @@ router.post('/assistant-config', async (req, res) => {
           {
             role: "system",
             content: `You are NyayaCheck Voice Legal Assistant. You are currently speaking with a user who uploaded a legal document (Document ID: ${sessionId}).
-            
+
+${languagePrompts[language] || languagePrompts.en}
+
+DOCUMENT CONTENT & CLAUSES ANALYSIS:
+${documentClausesText}
+
+DOCUMENT-WIDE RISKS:
+${documentRisksText || "None identified."}
+
 CRITICAL RULES:
-1. Always use function tools (getClauseDetail, getDocumentRisks, getLawCitation) whenever the user asks about specific clauses, risks, or statutory laws. DO NOT hallucinate legal provisions outside the tool responses.
-2. Keep spoken responses concise, empathetic, and clear (1-3 conversational sentences).
-3. If speaking in Hindi or Kannada, summarize the retrieved legal fact clearly in that language while preserving exact section numbers and act names.`
+1. You ALREADY have the document clauses, summaries, and risk analysis above. Whenever the user asks to explain the document, summarize the agreement, or explain specific clauses/risks, use the document context above directly to give a clear, immediate answer.
+2. Do NOT say "I will check" without answering. Answer immediately using the provided document context.
+3. If the user asks about specific statutory laws or section lookups not present in the document context above, use the getLawCitation function tool.
+4. Keep spoken responses concise, empathetic, natural, and engaging (2-3 conversational sentences maximum so it sounds great when spoken aloud).`
           }
         ],
         tools: [
+          {
+            type: "function",
+            async: false,
+            server: { url: serverUrl },
+            function: {
+              name: "explainDocumentOverview",
+              description: "Fetch a complete summary of all clauses and document-level risks in the uploaded agreement.",
+              parameters: {
+                type: "object",
+                properties: {}
+              }
+            }
+          },
           {
             type: "function",
             async: false,
@@ -279,11 +329,7 @@ CRITICAL RULES:
         ]
       },
       transcriber: transcriberConfig,
-
-      voice: {
-        provider: "azure",
-        voiceId: "andrew"
-      },
+      voice: voiceConfig,
       metadata: {
         document_id: sessionId,
         language: language

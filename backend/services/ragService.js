@@ -545,8 +545,24 @@ async function getClauseDetail(session, clauseIdQuery) {
     return { error: "Session or clauses not found." };
   }
 
+  const queryStr = String(clauseIdQuery || '').toLowerCase().trim();
+  if (!queryStr || queryStr === 'all' || queryStr === 'overview' || queryStr === 'undefined') {
+    const clauseSummaries = session.clauses.map(c => {
+      const flag = session.flags ? session.flags[c.id] : null;
+      return `Clause ${c.id}: ${c.text.substring(0, 150)}${flag ? ` (Risk: ${flag.risk_level}, Category: ${flag.category})` : ''}`;
+    }).join('\n');
+
+    return {
+      found: true,
+      overview: true,
+      totalClauses: session.clauses.length,
+      documentRisks: session.documentRisks || [],
+      clausesSummary: clauseSummaries
+    };
+  }
+
   // Handle various clause ID formats (e.g. "clause_1", "1", "Clause 2", 2)
-  const normalizedQuery = String(clauseIdQuery).toLowerCase().replace(/[^0-9]/g, '');
+  const normalizedQuery = queryStr.replace(/[^0-9]/g, '');
   
   let targetClause = session.clauses.find(c => {
     const normId = String(c.id).toLowerCase().replace(/[^0-9]/g, '');
