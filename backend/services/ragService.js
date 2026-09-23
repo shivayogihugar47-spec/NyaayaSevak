@@ -21,6 +21,22 @@ function validateSchema(data) {
   return true;
 }
 
+function safeExtractJson(text) {
+  if (!text || typeof text !== 'string') return null;
+  const clean = text.trim().replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/\s*```$/, '').trim();
+  try {
+    return JSON.parse(clean);
+  } catch (e) {}
+
+  const match = text.match(/\{[\s\S]*\}/);
+  if (match) {
+    try {
+      return JSON.parse(match[0]);
+    } catch (e) {}
+  }
+  return null;
+}
+
 let pipeline;
 async function getRealEmbedding(text) {
   if (!pipeline) {
@@ -74,13 +90,8 @@ ${retrievedLaws.map(l => `${l.act_name}, Section ${l.section_number}:\n${l.conte
       if (content) rawResponse += content;
     }
     
-    // Robust cleanup: sometimes the model outputs text before or after the JSON.
-    const jsonMatch = rawResponse.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("No JSON object found in response");
-    const cleanJson = jsonMatch[0];
-    
-    const parsed = JSON.parse(cleanJson);
-    if (!validateSchema(parsed)) throw new Error("Invalid schema");
+    const parsed = safeExtractJson(rawResponse);
+    if (!parsed || !validateSchema(parsed)) throw new Error("Invalid schema or JSON output");
     
     return parsed;
   } catch (error) {
@@ -135,10 +146,10 @@ async function processClause(clauseText) {
 }
 
 // New: Chat function
-async function generateChatResponse(question, documentClauses) {
-  const embeddingStr = await getRealEmbedding(question);
+async function generateChatResponse(question, documentClauses = []) {
   let retrievedLaws = [];
   try {
+    const embeddingStr = await getRealEmbedding(question);
     const res = await queryWithRetry(`
       WITH RankedChunks AS (
         SELECT act_name, section_number, content, 
@@ -156,10 +167,10 @@ async function generateChatResponse(question, documentClauses) {
     retrievedLaws = res.rows;
   } catch (err) {}
 
-  const fullDocText = documentClauses.map(c => c.text).join('\n');
+  const fullDocText = (documentClauses || []).map(c => c.text).join('\n');
   const lawsText = retrievedLaws.map(l => `${l.act_name} Sec ${l.section_number}: ${l.content}`).join('\n\n');
 
-  const prompt = `You are NyayaCheck, a strict legal assistant. Answer the user's question based ONLY on the provided document clauses and the retrieved laws.
+  const prompt = `You are NyayaCheck, a helpful AI legal assistant. Answer the user's question clearly based on the provided document clauses and retrieved statutory laws.
 
 Document Context:
 ${fullDocText.substring(0, 4000)}
@@ -168,10 +179,10 @@ Retrieved Laws Context:
 ${retrievedLaws.length > 0 ? lawsText : "NONE FOUND"}
 
 Rules:
-1. Do NOT invent citations or laws. Use only the Retrieved Laws context.
-2. If you cite the Model Tenancy Act, you MUST append this exact caveat: "(Model Tenancy Act — binding only in states that have adopted it; verify local applicability)".
-3. If no relevant laws are in the Retrieved Laws Context (i.e. it says "NONE FOUND"), or if the document clauses do not contain the answer, you MUST state that you cannot find a grounded answer in the legal context rather than guessing. Do not try to answer using general knowledge. If this happens, you MUST return an empty array [] for "sources".
-4. Your output MUST be a JSON object matching this exact schema:
+1. For greetings (e.g. "hi", "hello", "hey"), greet the user warmly and invite them to ask any question about their document or legal rights.
+2. For specific questions about the document or laws, answer accurately using the contexts provided.
+3. Do NOT invent citations. Use only the Provided Laws context. If citing the Model Tenancy Act, append: "(Model Tenancy Act — binding only in states that have adopted it; verify local applicability)".
+4. Output your response as a JSON object matching this exact schema:
 {
   "answer": "Your detailed answer to the question",
   "sources": [
@@ -181,21 +192,36 @@ Rules:
 
 User Question: ${question}`;
 
-  const response = await openrouter.chat.send({
-    chatRequest: {
-      model: MODEL,
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: "json_object" }
-    }
-  });
-
   try {
-    let rawResponse = response.choices[0].message.content;
-    const cleanJson = rawResponse.trim().replace(/^```json/, '').replace(/```$/, '').trim();
-    return JSON.parse(cleanJson);
+    const response = await openrouter.chat.send({
+      chatRequest: {
+        model: MODEL,
+        messages: [{ role: 'user', content: prompt }],
+        response_format: { type: "json_object" }
+      }
+    });
+
+    let rawResponse = response.choices?.[0]?.message?.content || "";
+    
+    // Attempt JSON parse using safeExtractJson helper
+    const parsed = safeExtractJson(rawResponse);
+    if (parsed && typeof parsed.answer === 'string') {
+      return {
+        answer: parsed.answer,
+        sources: Array.isArray(parsed.sources) ? parsed.sources : []
+      };
+    }
+
+    // Fallback: If model returned plain text, return it directly as the answer!
+    const cleanText = rawResponse.replace(/```json/gi, '').replace(/```/g, '').trim();
+    if (cleanText) {
+      return { answer: cleanText, sources: [] };
+    }
+
+    return { answer: "Hello! How can I help you analyze your rental agreement or answer legal questions?", sources: [] };
   } catch (err) {
-    console.error("Failed to parse chat JSON", err);
-    return { answer: "Sorry, I encountered an error formatting my response.", sources: [] };
+    console.error("Failed to generate chat response:", err);
+    return { answer: "Sorry, I encountered an error answering your message. Please try again.", sources: [] };
   }
 }
 
@@ -222,7 +248,7 @@ CRITICAL RULES:
     }
   });
 
-  return response.choices[0].message.content;
+  return response.choices[0]?.message?.content || "";
 }
 
 // New: Compare Documents
@@ -249,18 +275,21 @@ Format your response as a valid JSON object matching this schema exactly (no mar
   ]
 }`;
 
-  const response = await openrouter.chat.send({
-    chatRequest: {
-      model: MODEL,
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: "json_object" }
-    }
-  });
-
   try {
-    let rawResponse = response.choices[0].message.content;
-    const cleanJson = rawResponse.trim().replace(/^```json/, '').replace(/```$/, '').trim();
-    return JSON.parse(cleanJson);
+    const response = await openrouter.chat.send({
+      chatRequest: {
+        model: MODEL,
+        messages: [{ role: 'user', content: prompt }],
+        response_format: { type: "json_object" }
+      }
+    });
+
+    let rawResponse = response.choices?.[0]?.message?.content || "";
+    const parsed = safeExtractJson(rawResponse);
+    if (parsed && Array.isArray(parsed.differences)) {
+      return parsed;
+    }
+    return { differences: [] };
   } catch (err) {
     console.error("Failed to parse compare JSON", err);
     return { differences: [] };
@@ -289,18 +318,21 @@ Output a JSON object matching this schema exactly:
 }
 If no document-level risks are found, return an empty array for "document_risks".`;
 
-  const response = await openrouter.chat.send({
-    chatRequest: {
-      model: MODEL,
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: "json_object" }
-    }
-  });
-
   try {
-    let rawResponse = response.choices[0].message.content;
-    const cleanJson = rawResponse.trim().replace(/^```json/, '').replace(/```$/, '').trim();
-    return JSON.parse(cleanJson).document_risks || [];
+    const response = await openrouter.chat.send({
+      chatRequest: {
+        model: MODEL,
+        messages: [{ role: 'user', content: prompt }],
+        response_format: { type: "json_object" }
+      }
+    });
+
+    let rawResponse = response.choices?.[0]?.message?.content || "";
+    const parsed = safeExtractJson(rawResponse);
+    if (parsed && Array.isArray(parsed.document_risks)) {
+      return parsed.document_risks;
+    }
+    return [];
   } catch (err) {
     console.error("Failed to parse document risks JSON", err);
     return [];
@@ -313,7 +345,6 @@ async function generateLawyerQuestions(documentRisks, clauseAnalyses) {
   const lowConfidence = clauseAnalyses.filter(c => c.analysis.confidence_level === 'Low');
   const mediumRisk = clauseAnalyses.filter(c => c.analysis.risk_level === 'Medium');
 
-  // Collect verified citations present in the analyzed clauses & document risks
   const verifiedCitations = new Set();
   clauseAnalyses.forEach(c => {
     if (c.analysis.cited_law && c.analysis.cited_law !== 'None' && c.analysis.cited_law !== 'Safe') {
@@ -345,9 +376,9 @@ ${JSON.stringify([...mediumRisk, ...lowConfidence].map(c => ({ clause_id: c.id, 
 Generate 3 to 4 short, clear questions for the client to ask their advocate during a consultation.
 
 CRITICAL RULES:
-1. STRICT GROUNDING: You MUST ONLY reference section numbers or Act names that appear in the "Verified Citations Found in Document Analysis" list above. DO NOT invent, hallucinate, or cite any other Acts or section numbers (e.g. do NOT cite Specific Relief Act, Civil Procedure Code, or any law not in the verified list). If you mention a legal strategy concept (like an addendum or court protection), describe it in plain English without citing unverified section numbers.
-2. PLAIN & DIRECT PHRASING: Write each question in plain, simple, spoken English that a non-lawyer client can easily read out loud in a meeting. Keep it short and ask ONE clear question per topic.
-3. CONTEXT SEPARATION: Keep detailed legal reasoning and statutory citations in the separate "context" field — do NOT pack long legal jargon into the question text.
+1. STRICT GROUNDING: You MUST ONLY reference section numbers or Act names that appear in the "Verified Citations Found in Document Analysis" list above. DO NOT invent, hallucinate, or cite any other Acts or section numbers.
+2. PLAIN & DIRECT PHRASING: Write each question in plain, simple, spoken English that a non-lawyer client can easily read out loud in a meeting.
+3. CONTEXT SEPARATION: Keep detailed legal reasoning and statutory citations in the separate "context" field.
 4. Output ONLY a strictly valid JSON object matching this schema:
 {
   "questions": [
@@ -368,10 +399,18 @@ CRITICAL RULES:
       }
     });
 
-    let rawResponse = response.choices[0].message.content;
-    const cleanJson = rawResponse.trim().replace(/^```json/, '').replace(/```$/, '').trim();
-    const parsed = JSON.parse(cleanJson);
-    return parsed.questions || [];
+    let rawResponse = response.choices?.[0]?.message?.content || "";
+    const parsed = safeExtractJson(rawResponse);
+    if (parsed && Array.isArray(parsed.questions)) {
+      return parsed.questions;
+    }
+    return [
+      {
+        topic: "Clause Enforceability",
+        question: "Are the penalty and immediate eviction clauses legally enforceable in court?",
+        context: "Multiple high-risk clauses were identified in the agreement."
+      }
+    ];
   } catch (err) {
     console.error("Failed to generate lawyer questions", err);
     return [
