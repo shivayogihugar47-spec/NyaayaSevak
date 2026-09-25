@@ -171,7 +171,8 @@ function App() {
       const res = await axios.post('/api/chat', {
         sessionId: session.sessionId,
         question: msg,
-        language
+        language,
+        clauses: session.clauses
       });
       const newSources = res.data.sources || [];
       setChatMessages(prev => [...prev, { role: 'assistant', content: res.data.answer, sources: newSources }]);

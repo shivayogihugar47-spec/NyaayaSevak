@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const ragService = require('../services/ragService');
-const { sessionStore, voiceSourcesStore } = require('../services/sessionStore');
+const { sessionStore, voiceSourcesStore, getSession } = require('../services/sessionStore');
 
 /**
  * POST /api/voice/briefing
@@ -10,7 +10,8 @@ const { sessionStore, voiceSourcesStore } = require('../services/sessionStore');
 router.post('/briefing', async (req, res) => {
   try {
     const { sessionId } = req.body;
-    const session = sessionStore[sessionId];
+    let session = sessionStore[sessionId];
+    if (!session) session = await getSession(sessionId);
     if (!session) {
       return res.status(404).json({ error: "Session not found" });
     }
@@ -58,7 +59,8 @@ router.post('/webhook', async (req, res) => {
     const callMetadata = message.call?.metadata || payload.call?.metadata || {};
     const sessionId = callMetadata.document_id || payload.document_id || message.document_id;
 
-    const session = sessionStore[sessionId];
+    let session = sessionStore[sessionId];
+    if (!session) session = await getSession(sessionId);
     if (!session) {
       console.warn(`Webhook call rejected: No active session found for document_id '${sessionId}'`);
     }
@@ -139,7 +141,8 @@ router.post('/webhook', async (req, res) => {
 router.post('/assistant-config', async (req, res) => {
   try {
     const { sessionId, language = 'en' } = req.body;
-    const session = sessionStore[sessionId];
+    let session = sessionStore[sessionId];
+    if (!session) session = await getSession(sessionId);
     
     if (!session) {
       return res.status(404).json({ error: "Session not found" });

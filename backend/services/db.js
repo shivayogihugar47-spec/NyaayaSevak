@@ -56,6 +56,15 @@ async function initDB() {
         embedding vector(384) -- Using 384 dimensions for all-MiniLM-L6-v2 embeddings
       );
     `);
+
+    // Create the sessions table for serverless persistence
+    await queryWithRetry(`
+      CREATE TABLE IF NOT EXISTS sessions (
+        id VARCHAR(255) PRIMARY KEY,
+        data JSONB NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
     
     // Create an HNSW index on the embedding column for fast approximate nearest neighbor search
     await queryWithRetry(`

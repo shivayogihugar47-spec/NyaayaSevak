@@ -6,7 +6,7 @@ const ragService = require('../services/ragService');
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
-const { sessionStore } = require('../services/sessionStore');
+const { sessionStore, getSession, saveSession } = require('../services/sessionStore');
 
 
 /**
@@ -34,7 +34,9 @@ router.post('/upload', upload.single('document'), async (req, res) => {
 
     // Generate a temporary session ID
     const sessionId = Date.now().toString();
-    sessionStore[sessionId] = { clauses, flags: {}, documentRisks };
+    const sessionObj = { clauses, flags: {}, documentRisks };
+    sessionStore[sessionId] = sessionObj;
+    await saveSession(sessionId, sessionObj);
 
     res.json({ sessionId, clauses, documentRisks });
   } catch (error) {
@@ -54,11 +56,13 @@ router.post('/upload', upload.single('document'), async (req, res) => {
 router.post('/analyze-clause', async (req, res) => {
   const { sessionId, clauseId, language = 'English' } = req.body;
 
-  if (!sessionId || !sessionStore[sessionId]) {
+  let session = sessionStore[sessionId];
+  if (!session) session = await getSession(sessionId);
+  if (!sessionId || !session) {
     return res.status(404).json({ error: 'Session not found' });
   }
 
-  const clause = sessionStore[sessionId].clauses.find(c => c.id === clauseId);
+  const clause = session.clauses.find(c => c.id === clauseId);
   if (!clause) {
     return res.status(404).json({ error: 'Clause not found' });
   }
@@ -68,7 +72,9 @@ router.post('/analyze-clause', async (req, res) => {
     const analysis = await ragService.processClause(clause.text, language);
     
     // Save to session
-    sessionStore[sessionId].flags[clauseId] = analysis;
+    session.flags[clauseId] = analysis;
+    sessionStore[sessionId] = session;
+    await saveSession(sessionId, session);
 
     res.json({ clauseId, analysis });
   } catch (error) {
@@ -80,9 +86,16 @@ router.post('/analyze-clause', async (req, res) => {
 // POST /api/chat
 router.post('/chat', async (req, res) => {
   try {
-    const { sessionId, question, language = 'English' } = req.body;
-    const session = sessionStore[sessionId];
-    if (!session) return res.status(404).json({ error: "Session not found" });
+    const { sessionId, question, language = 'English', clauses } = req.body;
+    let session = sessionStore[sessionId];
+    if (!session) session = await getSession(sessionId);
+    
+    // Fallback for stateless serverless environments (Vercel)
+    if (!session && clauses) {
+      session = { clauses };
+    }
+
+    if (!session || !session.clauses) return res.status(404).json({ error: "Session or clauses not found" });
 
     const chatData = await ragService.generateChatResponse(question, session.clauses, language);
     res.json({ answer: chatData.answer, sources: chatData.sources || [] });
@@ -124,6 +137,7 @@ router.post('/export-summary', async (req, res) => {
   try {
     const { sessionId } = req.body;
     let session = sessionStore[sessionId];
+    if (!session) session = await getSession(sessionId);
     
     if (!session && req.body.clauses && req.body.flags) {
       session = {
@@ -144,6 +158,7 @@ router.post('/export-summary', async (req, res) => {
       if (!analysis) {
         analysis = await ragService.processClause(clause.text);
         session.flags[clause.id] = analysis;
+        await saveSession(sessionId, session);
       }
       clauseAnalyses.push({
         id: clause.id,
