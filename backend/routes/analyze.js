@@ -119,16 +119,30 @@ router.post('/negotiate', async (req, res) => {
 
 
 // POST /api/compare
-router.post('/compare', async (req, res) => {
+router.post('/compare', upload.fields([{ name: 'fileA', maxCount: 1 }, { name: 'fileB', maxCount: 1 }]), async (req, res) => {
   try {
-    const { textA, textB } = req.body;
-    if (!textA || !textB) return res.status(400).json({ error: "Missing document texts" });
+    let textA = '';
+    let textB = '';
+
+    if (req.files && req.files.fileA) {
+      textA = await extractText(req.files.fileA[0].buffer, req.files.fileA[0].mimetype);
+    } else if (req.body.textA) {
+      textA = req.body.textA;
+    }
+
+    if (req.files && req.files.fileB) {
+      textB = await extractText(req.files.fileB[0].buffer, req.files.fileB[0].mimetype);
+    } else if (req.body.textB) {
+      textB = req.body.textB;
+    }
+
+    if (!textA || !textB) return res.status(400).json({ error: "Missing documents to compare" });
 
     const analysis = await ragService.compareDocuments(textA, textB);
     res.json({ analysis });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Compare generation failed" });
+    console.error("Compare error:", err);
+    res.status(500).json({ error: "Compare generation failed: " + err.message });
   }
 });
 
