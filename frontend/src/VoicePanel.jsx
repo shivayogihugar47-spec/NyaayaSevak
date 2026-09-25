@@ -4,6 +4,8 @@ import axios from 'axios';
 import { Mic, MicOff, PhoneOff, Volume2, Globe, ShieldAlert, FileText, CheckCircle2, Loader2, Sparkles, X, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || '';
+
 // Safely resolve Vapi constructor across ESM/CJS bundlers
 function getVapiConstructor(sdk) {
   if (typeof sdk === 'function') return sdk;

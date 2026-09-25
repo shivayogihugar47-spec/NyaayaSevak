@@ -8,6 +8,8 @@ import VoicePanel from './VoicePanel';
 import DocumentViewer from './DocumentViewer';
 import { Document, Page, pdfjs } from 'react-pdf';
 
+axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || '';
+
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.min.mjs',
   import.meta.url,
