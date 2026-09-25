@@ -736,64 +736,112 @@ function App() {
           ) : (
             <motion.div 
               key="compareResults"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="max-w-4xl mx-auto"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="max-w-6xl mx-auto flex flex-col gap-8 h-[calc(100vh-120px)]"
             >
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-3xl font-bold flex items-center gap-3">
-                  <ArrowLeftRight className="w-8 h-8 text-indigo-400" />
-                  Contract Diff Analysis
-                </h2>
-                <button 
-                  onClick={() => setCompareResults(null)}
-                  className="bg-white/5 hover:bg-white/10 text-neutral-200 px-4 py-2 rounded-lg font-medium transition-colors text-sm"
-                >
-                  New Comparison
-                </button>
+              <div className="flex items-center justify-between border-b border-neutral-800 pb-6 shrink-0">
+                <div>
+                  <h2 className="text-2xl font-bold flex items-center gap-3 text-white">
+                    <ArrowLeftRight className="w-6 h-6 text-indigo-500" />
+                    Version X-Ray
+                  </h2>
+                  <p className="text-sm text-neutral-400 mt-2">
+                    Analyzing semantic liability shifts between Draft V1 and Draft V2
+                  </p>
+                </div>
+                
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 bg-[#111113] border border-neutral-800 px-4 py-2 rounded-lg text-sm">
+                    <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                    <span className="font-semibold text-white">{compareResults.differences ? compareResults.differences.filter(d => d.risk_level === 'High').length : 0}</span>
+                    <span className="text-neutral-500">Critical</span>
+                  </div>
+                  <button 
+                    onClick={() => setCompareResults(null)}
+                    className="bg-white text-black hover:bg-neutral-200 px-4 py-2 rounded-lg font-bold transition-colors text-sm shadow-sm"
+                  >
+                    New Comparison
+                  </button>
+                </div>
               </div>
 
-              <div className="flex flex-col gap-6">
+              <div className="flex-1 overflow-y-auto pr-2 pb-10 space-y-8">
                 {!compareResults.differences || compareResults.differences.length === 0 ? (
-                  <div className="glass-panel rounded-2xl p-12 text-center text-neutral-400">
-                    <CheckCircle2 className="w-16 h-16 text-green-500/50 mx-auto mb-4" />
-                    <p className="text-lg">No material shifts in liability detected between the two versions.</p>
+                  <div className="bg-[#111113] border border-neutral-800 rounded-2xl p-20 flex flex-col items-center text-center">
+                    <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mb-6 border border-green-500/20">
+                      <CheckCircle2 className="w-10 h-10 text-green-500" />
+                    </div>
+                    <h3 className="text-xl font-bold text-white mb-2">Versions are Semantically Identical</h3>
+                    <p className="text-neutral-400 max-w-md">No material shifts in liability or obligations were detected between the two contract versions.</p>
                   </div>
                 ) : (
-                  compareResults.differences.map((diff, idx) => (
-                    <div key={idx} className="glass-panel rounded-2xl p-6 relative overflow-hidden">
-                      <div className={`absolute top-0 left-0 w-1 h-full ${diff.risk_level === 'High' ? 'bg-red-500' : diff.risk_level === 'Medium' ? 'bg-yellow-500' : 'bg-blue-500'}`}></div>
-                      
-                      <div className="flex justify-between items-start mb-4 pl-3">
-                        <h4 className="text-xl font-medium text-white">{diff.clause_topic}</h4>
-                        <span className={`text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1 ${
-                          diff.risk_level === 'High' ? 'bg-red-500/20 text-red-300' : 
-                          diff.risk_level === 'Medium' ? 'bg-yellow-500/20 text-yellow-300' : 
-                          'bg-blue-500/20 text-blue-300'
-                        }`}>
-                          <AlertTriangle className="w-3 h-3" /> {diff.risk_level} Risk
-                        </span>
-                      </div>
+                  compareResults.differences.map((diff, idx) => {
+                    const isHighRisk = diff.risk_level === 'High';
+                    const isMedRisk = diff.risk_level === 'Medium';
+                    const riskColor = isHighRisk ? 'text-red-400' : isMedRisk ? 'text-yellow-400' : 'text-blue-400';
+                    const riskBg = isHighRisk ? 'bg-red-500/10 border-red-500/20' : isMedRisk ? 'bg-yellow-500/10 border-yellow-500/20' : 'bg-blue-500/10 border-blue-500/20';
 
-                      <div className="grid grid-cols-2 gap-4 pl-3 mb-4">
-                        <div className="bg-red-950/20 border border-red-500/10 p-4 rounded-xl">
-                          <div className="text-xs text-red-400/70 font-semibold uppercase tracking-wider mb-2">Old Version</div>
-                          <div className="text-sm text-neutral-300 line-through decoration-red-500/30">{diff.old_term}</div>
+                    return (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.1 }}
+                        key={idx} 
+                        className="bg-[#09090b] border border-neutral-800 rounded-xl overflow-hidden shadow-sm flex flex-col"
+                      >
+                        {/* Header */}
+                        <div className="bg-[#111113] border-b border-neutral-800 px-5 py-4 flex justify-between items-center">
+                          <h4 className="text-lg font-semibold text-white flex items-center gap-2">
+                            {diff.clause_topic}
+                          </h4>
+                          <span className={\`text-[10px] px-2.5 py-1 rounded uppercase tracking-wider font-bold border \${riskBg} \${riskColor} flex items-center gap-1.5\`}>
+                            <AlertTriangle className="w-3 h-3" /> {diff.risk_level} Risk Shift
+                          </span>
                         </div>
-                        <div className="bg-green-950/20 border border-green-500/10 p-4 rounded-xl">
-                          <div className="text-xs text-green-400/70 font-semibold uppercase tracking-wider mb-2">New Version</div>
-                          <div className="text-sm text-neutral-300">{diff.new_term}</div>
-                        </div>
-                      </div>
 
-                      <div className="pl-3">
-                        <div className="bg-black/40 border border-white/5 p-4 rounded-xl text-sm text-neutral-300">
-                          <span className="font-semibold text-indigo-400 mr-2">Impact:</span>
-                          {diff.impact}
+                        {/* Split Diff View */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-neutral-800">
+                          {/* Old Version */}
+                          <div className="bg-[rgba(255,0,0,0.02)] p-6 relative group">
+                            <div className="absolute top-0 left-0 w-full h-1 bg-red-500/20"></div>
+                            <div className="flex items-center gap-2 mb-4">
+                              <span className="w-2 h-2 rounded-full bg-red-500/50"></span>
+                              <h5 className="text-xs font-bold text-red-400/80 uppercase tracking-wider">Original Draft</h5>
+                            </div>
+                            <p className="text-sm text-neutral-300 leading-relaxed line-through decoration-red-500/40">
+                              {diff.old_term}
+                            </p>
+                          </div>
+                          
+                          {/* New Version */}
+                          <div className="bg-[rgba(0,255,0,0.02)] p-6 relative group">
+                            <div className="absolute top-0 left-0 w-full h-1 bg-green-500/20"></div>
+                            <div className="flex items-center gap-2 mb-4">
+                              <span className="w-2 h-2 rounded-full bg-green-500/50"></span>
+                              <h5 className="text-xs font-bold text-green-400/80 uppercase tracking-wider">Proposed Draft</h5>
+                            </div>
+                            <p className="text-sm text-neutral-100 leading-relaxed font-medium">
+                              {diff.new_term}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  ))
+
+                        {/* Impact Footer */}
+                        <div className="bg-[#111113] border-t border-neutral-800 p-5 flex items-start gap-4">
+                          <div className="w-8 h-8 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                            <ShieldAlert className="w-4 h-4 text-indigo-400" />
+                          </div>
+                          <div>
+                            <h5 className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-1">Material Impact Analysis</h5>
+                            <p className="text-sm text-neutral-300 leading-relaxed">
+                              {diff.impact}
+                            </p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })
                 )}
               </div>
             </motion.div>
