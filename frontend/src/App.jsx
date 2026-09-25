@@ -192,48 +192,34 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#030305] text-neutral-100 font-sans selection:bg-indigo-500/30 pb-20 relative overflow-hidden">
-      {/* Ambient background glows */}
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-indigo-900/20 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-purple-900/20 rounded-full blur-[120px] pointer-events-none" />
-
+    <div className="min-h-screen bg-[#09090b] text-neutral-100 font-sans selection:bg-indigo-500/30 pb-10 relative overflow-hidden">
+      
       {view === 'app' && (
-        <header className="border-b border-white/5 bg-black/40 backdrop-blur-2xl sticky top-0 z-40">
-          <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+        <header className="border-b border-neutral-800 bg-[#111113] sticky top-0 z-40 shadow-sm">
+          <div className="w-full px-6 h-16 flex items-center justify-between">
             <div className="flex items-center gap-2 cursor-pointer" onClick={() => {setView('landing'); setSession(null); setCompareResults(null);}}>
-              <ShieldAlert className="w-6 h-6 text-indigo-400" />
-              <h1 className="text-xl font-semibold tracking-tight">Nyaya<span className="text-indigo-400">Check</span></h1>
+              <ShieldAlert className="w-6 h-6 text-indigo-500" />
+              <h1 className="text-xl font-semibold tracking-tight">Nyaya<span className="text-indigo-500">Check</span></h1>
             </div>
-            <div className="flex gap-4">
+            <div className="flex gap-2 bg-[#09090b] border border-neutral-800 rounded-lg p-1">
               <button 
                 onClick={() => {setAppMode('analyze'); setSession(null); setCompareResults(null);}}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${appMode === 'analyze' ? 'bg-indigo-500/20 text-indigo-300' : 'text-neutral-400 hover:text-white'}`}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${appMode === 'analyze' ? 'bg-neutral-800 text-white shadow-sm' : 'text-neutral-400 hover:text-white hover:bg-neutral-800/50'}`}
               >
                 Single Document
               </button>
               <button 
                 onClick={() => {setAppMode('compare'); setSession(null); setCompareResults(null);}}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-2 ${appMode === 'compare' ? 'bg-indigo-500/20 text-indigo-300' : 'text-neutral-400 hover:text-white'}`}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${appMode === 'compare' ? 'bg-neutral-800 text-white shadow-sm' : 'text-neutral-400 hover:text-white hover:bg-neutral-800/50'}`}
               >
                 <ArrowLeftRight className="w-4 h-4" /> Compare Versions
               </button>
-              {/* 
-              <select 
-                value={language} 
-                onChange={(e) => setLanguage(e.target.value)}
-                className="bg-black/50 border border-white/10 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
-              >
-                <option value="English">English</option>
-                <option value="Hindi">हिन्दी (Hindi)</option>
-                <option value="Kannada">ಕನ್ನಡ (Kannada)</option>
-              </select>
-              */}
             </div>
           </div>
         </header>
       )}
 
-      <main className={`${view === 'app' ? 'max-w-7xl mx-auto px-6 py-12' : ''}`}>
+      <main className={`${view === 'app' ? 'w-full px-6 py-6' : ''}`}>
         <AnimatePresence mode="wait">
           {view === 'landing' ? (
             <motion.div 
@@ -353,265 +339,245 @@ function App() {
               key="dashboard"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="grid grid-cols-1 lg:grid-cols-2 gap-10 relative z-10"
+              className="flex flex-col lg:flex-row gap-6 relative z-10 h-[calc(100vh-120px)]"
             >
-              {/* X-Ray Document View */}
-              <div className="flex flex-col gap-5">
-                <div className="flex justify-end gap-4 px-2">
+              {/* Left Column: Document View */}
+              <div className="flex-1 flex flex-col min-w-0 bg-[#111113] border border-neutral-800 rounded-xl overflow-hidden shadow-sm">
+                <div className="flex justify-between items-center px-4 py-3 border-b border-neutral-800 bg-[#18181b]">
+                  <h3 className="font-medium text-white flex items-center gap-2 text-sm">
+                    <FileText className="w-4 h-4 text-neutral-400" /> Document Viewer
+                  </h3>
                   <button 
                     onClick={() => setVoiceOpen(true)}
-                    className="flex items-center gap-2.5 text-sm bg-gradient-to-r from-purple-600/20 to-purple-500/10 text-purple-200 hover:from-purple-600/30 hover:to-purple-500/20 px-6 py-2.5 rounded-2xl transition-all font-semibold border border-purple-500/20 shadow-[0_0_20px_rgba(168,85,247,0.15)] hover:shadow-[0_0_30px_rgba(168,85,247,0.3)]"
+                    className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors shadow-sm"
                   >
-                    <Mic className="w-4 h-4 text-purple-400" /> Voice Assistant
-                  </button>
-                  <button 
-                    onClick={() => setChatOpen(!chatOpen)}
-                    className="flex items-center gap-2.5 text-sm bg-gradient-to-r from-indigo-600/20 to-indigo-500/10 text-indigo-200 px-6 py-2.5 rounded-2xl hover:from-indigo-600/30 hover:to-indigo-500/20 transition-all font-semibold border border-indigo-500/20 shadow-[0_0_20px_rgba(99,102,241,0.15)] hover:shadow-[0_0_30px_rgba(99,102,241,0.3)]"
-                  >
-                    <MessageSquare className="w-4 h-4 text-indigo-400" /> Copilot Chat
+                    <Mic className="w-3.5 h-3.5" /> Voice Assistant
                   </button>
                 </div>
                 
-                <DocumentViewer 
-                  file={file} 
-                  clauses={session.clauses} 
-                  flags={flags} 
-                  activeClauseId={analyzingClause}
-                  onClauseClick={analyzeClause}
-                  chatClauseId={chatClauseId}
-                  onBoxesReady={setDocumentBoxes}
-                />
+                <div className="flex-1 overflow-auto bg-[#09090b] p-4 relative">
+                  <DocumentViewer 
+                    file={file} 
+                    clauses={session.clauses} 
+                    flags={flags} 
+                    activeClauseId={analyzingClause}
+                    onClauseClick={analyzeClause}
+                    chatClauseId={chatClauseId}
+                    onBoxesReady={setDocumentBoxes}
+                  />
+                </div>
               </div>
 
-              <div className="bg-[#0a0a0c]/80 backdrop-blur-3xl rounded-3xl border border-white/5 shadow-2xl shadow-black/50 p-8 h-[85vh] overflow-y-auto scrollbar-hide relative">
-                <div className="flex justify-between items-center mb-8 sticky top-0 bg-[#0a0a0c]/90 backdrop-blur-xl py-4 -mt-8 z-20 border-b border-white/5">
-                  <h3 className="text-xl font-semibold tracking-tight text-white/90">Risk Analysis & Leverage</h3>
+              {/* Right Column: Analysis / Chat */}
+              <div className="w-full lg:w-[480px] flex flex-col bg-[#111113] border border-neutral-800 rounded-xl overflow-hidden shadow-sm shrink-0">
+                
+                {/* Tabs */}
+                <div className="flex p-1.5 border-b border-neutral-800 bg-[#18181b] gap-1 shrink-0">
                   <button 
-                    onClick={fetchSummaryChecklist}
-                    className="bg-white hover:bg-neutral-200 text-black text-xs font-bold px-4 py-2 rounded-xl transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+                    onClick={() => setChatOpen(false)}
+                    className={`flex-1 py-2 text-xs font-medium rounded-md transition-colors flex items-center justify-center gap-2 ${!chatOpen ? 'bg-neutral-800 text-white shadow-sm' : 'text-neutral-400 hover:text-white hover:bg-neutral-800/50'}`}
                   >
-                    <FileText className="w-4 h-4" /> Generate Report
+                    <ShieldAlert className="w-4 h-4" /> Risk Analysis
+                  </button>
+                  <button 
+                    onClick={() => setChatOpen(true)}
+                    className={`flex-1 py-2 text-xs font-medium rounded-md transition-colors flex items-center justify-center gap-2 ${chatOpen ? 'bg-indigo-600 text-white shadow-sm' : 'text-neutral-400 hover:text-white hover:bg-neutral-800/50'}`}
+                  >
+                    <MessageSquare className="w-4 h-4" /> Copilot Chat
                   </button>
                 </div>
-                
-                {Object.keys(flags).length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-neutral-500 text-center">
-                    <ShieldAlert className="w-12 h-12 mb-4 opacity-50" />
-                    <p>Click any clause on the left<br/>to benchmark it against Indian law.</p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-4">
-                    
-                    {session.documentRisks && session.documentRisks.length > 0 && (
-                      <div className="mb-4 space-y-4">
-                        {session.documentRisks.map((risk, idx) => (
-                          <div key={`doc-risk-${idx}`} className={`p-6 rounded-2xl border ${risk.risk_level === 'High' ? 'bg-red-950/20 border-red-500/30' : 'bg-yellow-950/20 border-yellow-500/30'}`}>
-                            <div className="flex items-start justify-between mb-4">
-                              <h4 className="font-semibold text-lg text-white flex items-center gap-2">
-                                <AlertTriangle className={`w-5 h-5 ${risk.risk_level === 'High' ? 'text-red-400' : 'text-yellow-400'}`} />
-                                Document-Wide Risk: {risk.title}
-                              </h4>
-                              <span className={`text-xs px-3 py-1 rounded-full font-medium border ${risk.risk_level === 'High' ? 'bg-red-500/20 text-red-300 border-red-500/30' : 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30'}`}>
-                                {risk.risk_level} Risk
-                              </span>
-                            </div>
-                            <p className="text-sm text-neutral-300 leading-relaxed">{risk.description}</p>
-                          </div>
-                        ))}
+
+                {/* Content Area */}
+                <div className="flex-1 overflow-y-auto bg-[#09090b] relative flex flex-col">
+                  {!chatOpen ? (
+                    // Risk Analysis Content
+                    <div className="p-5 flex-1">
+                      <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-base font-semibold text-white">Risk Flags</h3>
+                        <button 
+                          onClick={fetchSummaryChecklist}
+                          className="bg-white hover:bg-neutral-200 text-black text-xs font-bold px-3 py-1.5 rounded-md transition-colors flex items-center gap-2"
+                        >
+                          <FileText className="w-3.5 h-3.5" /> Generate Report
+                        </button>
                       </div>
-                    )}
-
-                    {Object.entries(flags).map(([id, analysis]) => {
-                      const isRisky = analysis.risk_level === 'High' || analysis.risk_level === 'Medium';
-                      const badgeColor = analysis.risk_level === 'High' ? 'bg-red-500/20 text-red-300 border-red-500/30' 
-                                       : analysis.risk_level === 'Medium' ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30'
-                                       : 'bg-green-500/20 text-green-300 border-green-500/30';
                       
-                      return (
-                        <div key={id} className={`p-6 rounded-3xl border ${isRisky ? 'bg-[#0f0f11] border-white/10 shadow-xl' : 'bg-green-950/10 border-green-900/20'}`}>
-                          <div className="flex items-start justify-between mb-6">
-                            <h4 className="font-bold text-xl text-white/95 flex items-center gap-3 tracking-tight">
-                              {isRisky ? <ShieldAlert className="w-6 h-6 text-red-500" /> : <CheckCircle2 className="w-6 h-6 text-emerald-500" />}
-                              {analysis.category}
-                            </h4>
-                            <span className={`text-xs px-4 py-1.5 rounded-full font-bold uppercase tracking-wider border shadow-sm ${badgeColor}`}>
-                              {analysis.risk_level} Risk
-                            </span>
-                          </div>
-                          
-                          {/* Smart Crop visual for this clause */}
-                          {documentBoxes[id] && isRisky && file && (
-                            <div className="mb-6 rounded-2xl overflow-hidden border-2 border-red-500/20 relative h-32 bg-white/5 flex items-center justify-center shadow-inner">
-                               <div className="absolute top-3 left-3 bg-red-500/90 backdrop-blur-sm text-white text-[9px] uppercase tracking-widest font-bold px-2.5 py-1 rounded-md shadow-lg z-20 flex items-center gap-1.5">
-                                 <ShieldAlert className="w-3 h-3" /> Flagged Region
-                               </div>
-                               <div style={{
-                                 position: 'absolute',
-                                 top: -documentBoxes[id].top + (file.type === 'application/pdf' ? 50 : 20),
-                                 left: -documentBoxes[id].left + 20,
-                                 width: '100%',
-                                 pointerEvents: 'none',
-                                 opacity: 0.95
-                               }}>
-                                 {file.type === 'application/pdf' ? (
-                                   <Document file={file}>
-                                     <Page pageNumber={1} width={600} renderTextLayer={false} renderAnnotationLayer={false} />
-                                   </Document>
-                                 ) : (
-                                   <img 
-                                     src={URL.createObjectURL(file)} 
-                                     className="w-full max-w-2xl filter brightness-95" 
-                                   />
-                                 )}
-                               </div>
-                               {/* Red line strike */}
-                               <div className="absolute top-1/2 left-0 w-full h-1 bg-red-500 shadow-[0_0_20px_rgba(239,68,68,1)] z-10 transform -translate-y-1/2 rotate-1 mix-blend-multiply opacity-80"></div>
-                            </div>
-                          )}
-
-                          <div className="mb-6 bg-gradient-to-br from-indigo-500/10 to-purple-500/5 border border-indigo-500/20 rounded-2xl p-5 shadow-inner">
-                            <h5 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-3 flex items-center gap-2"><Search className="w-3.5 h-3.5"/> In Simple Terms</h5>
-                            <p className="text-[15px] text-white/90 leading-relaxed font-medium">{analysis.in_simple_terms}</p>
-                          </div>
-                          
-                          {isRisky && (
-                            <div className="mb-5 space-y-4">
-                              <div className="bg-black/40 rounded-xl p-4 border border-white/5">
-                                <h5 className="text-xs font-semibold text-red-400/80 uppercase tracking-wider mb-2">The Problem</h5>
-                                <p className="text-sm text-neutral-300">{analysis.legal_issue}</p>
-                              </div>
-                              
-                              {analysis.cited_law && analysis.cited_law !== 'None' && (
-                                <div className="bg-black/40 rounded-xl p-4 border border-white/5 flex items-start gap-3">
-                                  <FileText className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />
-                                  <div>
-                                    <h5 className="text-xs font-semibold text-indigo-400/80 uppercase tracking-wider mb-1">Source Law</h5>
-                                    <p className="text-sm text-neutral-400">{analysis.cited_law}</p>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                          
-                          {isRisky && (
-                            <div className="mt-6 pt-5 border-t border-white/10">
-                              <h5 className="text-xs font-semibold text-green-400/80 uppercase tracking-wider mb-3">Recommended Action</h5>
-                              <p className="text-sm text-neutral-300 mb-4">{analysis.recommended_action}</p>
-                              
-                              {!negotiationDrafts[id] ? (
-                                <button 
-                                  onClick={() => generateNegotiation(id, session.clauses.find(c=>c.id === id).text, analysis)}
-                                  disabled={draftingClause === id}
-                                  className="w-full bg-white/5 hover:bg-white/10 text-white text-sm font-medium py-3 rounded-xl transition-all border border-white/10 shadow-sm"
-                                >
-                                  {draftingClause === id ? 'Drafting Message...' : 'Draft Negotiation Email'}
-                                </button>
-                              ) : (
-                                <div className="bg-neutral-900 border border-neutral-700 rounded-xl p-5 relative group">
-                                  <div className="text-xs text-neutral-400 mb-3 font-medium flex items-center justify-between">
-                                    <span className="flex items-center gap-2">
-                                      <Send className="w-3.5 h-3.5" /> Suggested Message to Landlord
-                                    </span>
-                                    <button 
-                                      onClick={() => navigator.clipboard.writeText(negotiationDrafts[id])}
-                                      className="text-neutral-500 hover:text-white transition-colors flex items-center gap-1 opacity-0 group-hover:opacity-100"
-                                      title="Copy to clipboard"
-                                    >
-                                      <Copy className="w-3.5 h-3.5" /> Copy
-                                    </button>
-                                  </div>
-                                  <textarea 
-                                    className="w-full bg-black/30 border border-white/5 rounded-lg p-3 text-sm text-neutral-200 resize-none focus:outline-none focus:ring-1 focus:ring-indigo-500/50"
-                                    rows={6}
-                                    value={negotiationDrafts[id]}
-                                    onChange={(e) => setNegotiationDrafts(prev => ({ ...prev, [id]: e.target.value }))}
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          )}
+                      {Object.keys(flags).length === 0 ? (
+                        <div className="py-20 flex flex-col items-center justify-center text-neutral-500 text-center">
+                          <ShieldAlert className="w-10 h-10 mb-4 opacity-30" />
+                          <p className="text-sm">Click any clause on the left<br/>to benchmark it against Indian law.</p>
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Floating Chat Panel */}
-              <AnimatePresence>
-                {chatOpen && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                    className="absolute bottom-4 left-4 w-96 h-[500px] bg-neutral-950 rounded-2xl shadow-2xl flex flex-col z-[60] overflow-hidden border border-white/20"
-                  >
-                    <div className="p-4 border-b border-white/10 flex justify-between items-center bg-neutral-900">
-                      <h3 className="font-medium flex items-center gap-2">
-                        <MessageSquare className="w-4 h-4 text-indigo-400" />
-                        AI Legal Assistant
-                      </h3>
-                      <button onClick={() => setChatOpen(false)} className="text-neutral-400 hover:text-white">
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                    
-                    <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
-                      {chatMessages.map((msg, idx) => (
-                        <div key={idx} className={`max-w-[85%] rounded-xl p-4 text-sm ${
-                          msg.role === 'user' 
-                            ? 'bg-indigo-600 text-white self-end rounded-tr-none' 
-                            : 'bg-white/10 text-neutral-200 self-start rounded-tl-none border border-white/5'
-                        }`}>
-                          <div className="prose prose-invert prose-sm max-w-none prose-p:leading-relaxed prose-pre:bg-white/5 prose-pre:border prose-pre:border-white/10">
-                            <ReactMarkdown>
-                              {msg.content}
-                            </ReactMarkdown>
-                          </div>
-                          {msg.sources && msg.sources.length > 0 && (
-                            <div className="mt-3 pt-3 border-t border-white/10 flex flex-wrap gap-2">
-                              <span className="text-[10px] uppercase text-neutral-500 font-semibold mb-1 w-full">Sources:</span>
-                              {msg.sources.map((src, i) => (
-                                <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-neutral-300 flex items-center gap-1">
-                                  {src.type === 'law' ? <FileText className="w-3 h-3 text-indigo-400" /> : <CheckCircle2 className="w-3 h-3 text-green-400" />}
-                                  {src.reference}
-                                </span>
+                      ) : (
+                        <div className="flex flex-col gap-4">
+                          
+                          {session.documentRisks && session.documentRisks.length > 0 && (
+                            <div className="mb-2 space-y-3">
+                              {session.documentRisks.map((risk, idx) => (
+                                <div key={`doc-risk-${idx}`} className={`p-4 rounded-lg border ${risk.risk_level === 'High' ? 'bg-red-950/20 border-red-500/30' : 'bg-yellow-950/20 border-yellow-500/30'}`}>
+                                  <div className="flex items-start justify-between mb-3">
+                                    <h4 className="font-medium text-white flex items-center gap-2 text-sm">
+                                      <AlertTriangle className={`w-4 h-4 ${risk.risk_level === 'High' ? 'text-red-400' : 'text-yellow-400'}`} />
+                                      Document Risk
+                                    </h4>
+                                    <span className={`text-[9px] uppercase tracking-wider px-2 py-0.5 rounded font-bold border ${risk.risk_level === 'High' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'}`}>
+                                      {risk.risk_level}
+                                    </span>
+                                  </div>
+                                  <h5 className="text-xs font-medium text-white mb-2">{risk.title}</h5>
+                                  <p className="text-xs text-neutral-400 leading-relaxed">{risk.description}</p>
+                                </div>
                               ))}
                             </div>
                           )}
-                        </div>
-                      ))}
-                      {chatLoading && (
-                        <div className="bg-white/10 text-neutral-400 self-start rounded-xl rounded-tl-none p-3 text-sm border border-white/5">
-                          Thinking...
+
+                          {Object.entries(flags).map(([id, analysis]) => {
+                            const isRisky = analysis.risk_level === 'High' || analysis.risk_level === 'Medium';
+                            const badgeColor = analysis.risk_level === 'High' ? 'bg-red-500/10 text-red-400 border-red-500/20' 
+                                             : analysis.risk_level === 'Medium' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+                                             : 'bg-green-500/10 text-green-400 border-green-500/20';
+                            
+                            return (
+                              <div key={id} className={`p-4 rounded-lg border ${isRisky ? 'bg-[#111113] border-neutral-800' : 'bg-green-950/10 border-green-900/20'}`}>
+                                <div className="flex items-start justify-between mb-4">
+                                  <h4 className="font-medium text-white flex items-center gap-2 text-sm">
+                                    {isRisky ? <ShieldAlert className="w-4 h-4 text-red-500" /> : <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                                    {analysis.category}
+                                  </h4>
+                                  <span className={`text-[9px] px-2 py-0.5 rounded uppercase tracking-wider font-bold border ${badgeColor}`}>
+                                    {analysis.risk_level}
+                                  </span>
+                                </div>
+                                
+                                <div className="mb-4 bg-indigo-500/5 border border-indigo-500/10 rounded-md p-3">
+                                  <h5 className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Search className="w-3 h-3"/> Simple Terms</h5>
+                                  <p className="text-xs text-neutral-300 leading-relaxed">{analysis.in_simple_terms}</p>
+                                </div>
+                                
+                                {isRisky && (
+                                  <div className="space-y-3">
+                                    <div className="bg-[#09090b] rounded-md p-3 border border-neutral-800">
+                                      <h5 className="text-[10px] font-bold text-red-400/80 uppercase tracking-wider mb-1.5">The Problem</h5>
+                                      <p className="text-xs text-neutral-400">{analysis.legal_issue}</p>
+                                    </div>
+                                    
+                                    {analysis.cited_law && analysis.cited_law !== 'None' && (
+                                      <div className="bg-[#09090b] rounded-md p-3 border border-neutral-800 flex items-start gap-2">
+                                        <FileText className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+                                        <div>
+                                          <h5 className="text-[10px] font-bold text-indigo-400/80 uppercase tracking-wider mb-1">Source Law</h5>
+                                          <p className="text-xs text-neutral-400">{analysis.cited_law}</p>
+                                        </div>
+                                      </div>
+                                    )}
+                                    
+                                    <div className="pt-3 border-t border-neutral-800">
+                                      <h5 className="text-[10px] font-bold text-green-400/80 uppercase tracking-wider mb-2">Recommended Action</h5>
+                                      <p className="text-xs text-neutral-400 mb-3">{analysis.recommended_action}</p>
+                                      
+                                      {!negotiationDrafts[id] ? (
+                                        <button 
+                                          onClick={() => generateNegotiation(id, session.clauses.find(c=>c.id === id).text, analysis)}
+                                          disabled={draftingClause === id}
+                                          className="w-full bg-neutral-800 hover:bg-neutral-700 text-white text-xs font-medium py-2 rounded-md transition-colors border border-neutral-700"
+                                        >
+                                          {draftingClause === id ? 'Drafting...' : 'Draft Negotiation Email'}
+                                        </button>
+                                      ) : (
+                                        <div className="bg-[#09090b] border border-neutral-800 rounded-md p-3 group">
+                                          <div className="text-[10px] text-neutral-500 mb-2 font-medium flex items-center justify-between">
+                                            <span className="flex items-center gap-1.5">
+                                              <Send className="w-3 h-3" /> Draft Message
+                                            </span>
+                                            <button 
+                                              onClick={() => navigator.clipboard.writeText(negotiationDrafts[id])}
+                                              className="text-neutral-500 hover:text-white transition-colors flex items-center gap-1 opacity-0 group-hover:opacity-100"
+                                            >
+                                              <Copy className="w-3 h-3" /> Copy
+                                            </button>
+                                          </div>
+                                          <textarea 
+                                            className="w-full bg-transparent text-xs text-neutral-300 resize-none focus:outline-none"
+                                            rows={5}
+                                            value={negotiationDrafts[id]}
+                                            onChange={(e) => setNegotiationDrafts(prev => ({ ...prev, [id]: e.target.value }))}
+                                          />
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
-                    
-                    <div className="p-3 border-t border-white/10 bg-black/40">
-                      <div className="relative">
-                        <input 
-                          type="text" 
-                          value={chatInput}
-                          onChange={e => setChatInput(e.target.value)}
-                          onKeyDown={e => e.key === 'Enter' && sendChatMessage()}
-                          placeholder="Ask about the document..."
-                          className="w-full bg-white/5 border border-white/10 rounded-lg pl-3 pr-10 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                        />
-                        <button 
-                          onClick={sendChatMessage}
-                          disabled={chatLoading}
-                          className="absolute right-2 top-1.5 text-indigo-400 hover:text-indigo-300 disabled:opacity-50"
-                        >
-                          <Send className="w-5 h-5" />
-                        </button>
+                  ) : (
+                    // Chat Content
+                    <div className="flex flex-col h-full bg-[#09090b]">
+                      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
+                        {chatMessages.length === 0 && (
+                          <div className="flex flex-col items-center justify-center h-full text-neutral-500 text-center px-4">
+                            <MessageSquare className="w-10 h-10 mb-3 opacity-30" />
+                            <p className="text-sm">Ask me anything about your document or the laws we found.</p>
+                          </div>
+                        )}
+                        {chatMessages.map((msg, idx) => (
+                          <div key={idx} className={`max-w-[85%] rounded-xl p-3 text-sm ${
+                            msg.role === 'user' 
+                              ? 'bg-indigo-600 text-white self-end rounded-br-sm' 
+                              : 'bg-neutral-800 text-neutral-200 self-start rounded-bl-sm border border-neutral-700'
+                          }`}>
+                            <div className="prose prose-invert prose-sm max-w-none prose-p:leading-relaxed prose-pre:bg-neutral-900 prose-pre:border prose-pre:border-neutral-700">
+                              <ReactMarkdown>
+                                {msg.content}
+                              </ReactMarkdown>
+                            </div>
+                            {msg.sources && msg.sources.length > 0 && (
+                              <div className="mt-3 pt-3 border-t border-white/10 flex flex-wrap gap-2">
+                                <span className="text-[10px] uppercase text-neutral-500 font-semibold mb-1 w-full">Sources:</span>
+                                {msg.sources.map((src, i) => (
+                                  <span key={i} className="text-[10px] px-2 py-0.5 rounded bg-neutral-900 border border-neutral-700 text-neutral-400 flex items-center gap-1">
+                                    {src.type === 'law' ? <FileText className="w-3 h-3 text-indigo-400" /> : <CheckCircle2 className="w-3 h-3 text-green-400" />}
+                                    {src.reference}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                        {chatLoading && (
+                          <div className="bg-neutral-800 text-neutral-400 self-start rounded-xl rounded-bl-sm p-3 text-sm border border-neutral-700">
+                            Thinking...
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="p-3 border-t border-neutral-800 bg-[#111113] shrink-0">
+                        <div className="relative">
+                          <input 
+                            type="text" 
+                            value={chatInput}
+                            onChange={e => setChatInput(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && sendChatMessage()}
+                            placeholder="Ask about the document..."
+                            className="w-full bg-[#09090b] border border-neutral-700 rounded-md pl-3 pr-10 py-2 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
+                          />
+                          <button 
+                            onClick={sendChatMessage}
+                            disabled={chatLoading || !chatInput.trim()}
+                            className="absolute right-2 top-1.5 text-indigo-500 hover:text-indigo-400 disabled:opacity-50 disabled:hover:text-indigo-500"
+                          >
+                            <Send className="w-5 h-5" />
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Summary Checklist Export Modal */}
+                  )}
+                </div>
+              </div>
+            </motion.div>
+{/* Summary Checklist Export Modal */}
               <AnimatePresence>
                 {summaryOpen && (
                   <motion.div 
