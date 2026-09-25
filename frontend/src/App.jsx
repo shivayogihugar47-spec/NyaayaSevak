@@ -1,15 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { UploadCloud, ShieldAlert, CheckCircle2, ChevronRight, FileText, MessageSquare, Send, X, ArrowLeftRight, AlertTriangle, Loader2, Copy, Printer, HelpCircle, Mic } from 'lucide-react';
+import { UploadCloud, ShieldAlert, CheckCircle2, ChevronRight, FileText, MessageSquare, Send, X, ArrowLeftRight, AlertTriangle, Loader2, Copy, Printer, HelpCircle, Mic, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import LandingPage from './LandingPage';
 import VoicePanel from './VoicePanel';
+import DocumentViewer from './DocumentViewer';
+import { Document, Page, pdfjs } from 'react-pdf';
+
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url,
+).toString();
 
 
 function App() {
   const [view, setView] = useState('landing'); // 'landing' or 'app'
   const [appMode, setAppMode] = useState('analyze'); // 'analyze' or 'compare'
+  const [language, setLanguage] = useState('Auto-Detect');
   
   // Analyze State
   const [file, setFile] = useState(null);
@@ -26,6 +34,19 @@ function App() {
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [summaryData, setSummaryData] = useState(null);
+
+  // Clear analysis cache when language changes so it re-translates on click
+  useEffect(() => {
+    setFlags({});
+    setNegotiationDrafts({});
+    setAnalyzingClause(null);
+    setChatMessages([
+      { 
+        role: 'assistant', 
+        content: language === 'Kannada' ? 'ನಮಸ್ಕಾರ! ನಿಮ್ಮ ಡಾಕ್ಯುಮೆಂಟ್ ಬಗ್ಗೆ ಪ್ರಶ್ನೆಗಳನ್ನು ಕೇಳಿ.' : language === 'Hindi' ? 'नमस्ते! अपने दस्तावेज़ के बारे में कोई भी प्रश्न पूछें।' : 'Hi! Ask me any questions about your document or the laws we found.'
+      }
+    ]);
+  }, [language]);
 
   const fetchSummaryChecklist = async () => {
     if (!session) return;
@@ -60,6 +81,8 @@ function App() {
   ]);
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
+  const [chatClauseId, setChatClauseId] = useState(null);
+  const [documentBoxes, setDocumentBoxes] = useState({});
 
   const handleUpload = async (e) => {
     e.preventDefault();
@@ -102,7 +125,8 @@ function App() {
     try {
       const res = await axios.post('/api/analyze-clause', {
         sessionId: session.sessionId,
-        clauseId: clause.id
+        clauseId: clause.id,
+        language
       });
       setFlags(prev => ({ ...prev, [clause.id]: res.data.analysis }));
     } catch (err) {
@@ -125,7 +149,7 @@ function App() {
   const generateNegotiation = async (clauseId, clauseText, analysis) => {
     setDraftingClause(clauseId);
     try {
-      const res = await axios.post('/api/negotiate', { clauseText, analysis });
+      const res = await axios.post('/api/negotiate', { clauseText, analysis, language });
       setNegotiationDrafts(prev => ({ ...prev, [clauseId]: res.data.message }));
     } catch (err) {
       setNegotiationDrafts(prev => ({ ...prev, [clauseId]: "Failed to draft message." }));
@@ -144,9 +168,19 @@ function App() {
     try {
       const res = await axios.post('/api/chat', {
         sessionId: session.sessionId,
-        question: msg
+        question: msg,
+        language
       });
-      setChatMessages(prev => [...prev, { role: 'assistant', content: res.data.answer, sources: res.data.sources }]);
+      const newSources = res.data.sources || [];
+      setChatMessages(prev => [...prev, { role: 'assistant', content: res.data.answer, sources: newSources }]);
+      
+      // Auto-scroll DocumentViewer to first mentioned clause
+      const clauseSource = newSources.find(s => s.type === 'clause' || (s.reference && s.reference.startsWith('clause_')));
+      if (clauseSource && clauseSource.reference) {
+        setChatClauseId(clauseSource.reference);
+      } else {
+        setChatClauseId(null);
+      }
     } catch (err) {
       setChatMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I encountered an error.' }]);
     } finally {
@@ -155,10 +189,14 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100 font-sans selection:bg-indigo-500/30 pb-20">
+    <div className="min-h-screen bg-[#030305] text-neutral-100 font-sans selection:bg-indigo-500/30 pb-20 relative overflow-hidden">
+      {/* Ambient background glows */}
+      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-indigo-900/20 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-purple-900/20 rounded-full blur-[120px] pointer-events-none" />
+
       {view === 'app' && (
-        <header className="border-b border-white/10 bg-black/50 backdrop-blur-md sticky top-0 z-40">
-          <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <header className="border-b border-white/5 bg-black/40 backdrop-blur-2xl sticky top-0 z-40">
+          <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
             <div className="flex items-center gap-2 cursor-pointer" onClick={() => {setView('landing'); setSession(null); setCompareResults(null);}}>
               <ShieldAlert className="w-6 h-6 text-indigo-400" />
               <h1 className="text-xl font-semibold tracking-tight">Nyaya<span className="text-indigo-400">Check</span></h1>
@@ -176,6 +214,17 @@ function App() {
               >
                 <ArrowLeftRight className="w-4 h-4" /> Compare Versions
               </button>
+              {/* 
+              <select 
+                value={language} 
+                onChange={(e) => setLanguage(e.target.value)}
+                className="bg-black/50 border border-white/10 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+              >
+                <option value="English">English</option>
+                <option value="Hindi">हिन्दी (Hindi)</option>
+                <option value="Kannada">ಕನ್ನಡ (Kannada)</option>
+              </select>
+              */}
             </div>
           </div>
         </header>
@@ -301,68 +350,44 @@ function App() {
               key="dashboard"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="grid grid-cols-1 lg:grid-cols-2 gap-8 relative"
+              className="grid grid-cols-1 lg:grid-cols-2 gap-10 relative z-10"
             >
-              {/* Single Doc UI (Unchanged) */}
-              <div className="glass-panel rounded-2xl p-6 h-[80vh] overflow-y-auto flex flex-col gap-4">
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="text-lg font-medium flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-indigo-400" />
-                    Document Clauses
-                  </h3>
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={() => setVoiceOpen(true)}
-                      className="flex items-center gap-1.5 text-sm bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 px-3 py-1.5 rounded-lg transition-colors font-medium border border-purple-500/30"
-                    >
-                      <Mic className="w-4 h-4 text-purple-400" /> Voice AI
-                    </button>
-                    <button 
-                      onClick={() => setChatOpen(!chatOpen)}
-                      className="flex items-center gap-1.5 text-sm bg-indigo-500/20 text-indigo-300 px-3 py-1.5 rounded-lg hover:bg-indigo-500/30 transition-colors font-medium border border-indigo-500/30"
-                    >
-                      <MessageSquare className="w-4 h-4" /> Ask AI
-                    </button>
-                  </div>
-                </div>
-
-
-                {session.clauses.map(clause => (
-                  <div 
-                    key={clause.id} 
-                    className={`p-4 rounded-xl border transition-colors cursor-pointer
-                      ${flags[clause.id]?.risk_level === 'High' 
-                        ? 'bg-red-500/10 border-red-500/30 hover:border-red-500/50' 
-                        : flags[clause.id]?.risk_level === 'Medium'
-                          ? 'bg-yellow-500/10 border-yellow-500/30 hover:border-yellow-500/50'
-                          : flags[clause.id]
-                            ? 'bg-green-500/10 border-green-500/30 hover:border-green-500/50'
-                            : 'bg-white/[0.02] border-white/5 hover:border-indigo-500/30'
-                      }
-                    `}
-                    onClick={() => analyzeClause(clause)}
+              {/* X-Ray Document View */}
+              <div className="flex flex-col gap-5">
+                <div className="flex justify-end gap-4 px-2">
+                  <button 
+                    onClick={() => setVoiceOpen(true)}
+                    className="flex items-center gap-2.5 text-sm bg-gradient-to-r from-purple-600/20 to-purple-500/10 text-purple-200 hover:from-purple-600/30 hover:to-purple-500/20 px-6 py-2.5 rounded-2xl transition-all font-semibold border border-purple-500/20 shadow-[0_0_20px_rgba(168,85,247,0.15)] hover:shadow-[0_0_30px_rgba(168,85,247,0.3)]"
                   >
-                    <div className="flex justify-between items-center mb-3">
-                      <div className="text-xs text-neutral-500 font-semibold tracking-wider uppercase">
-                        {flags[clause.id]?.category || clause.id.replace('_', ' ')}
-                      </div>
-                      {analyzingClause === clause.id && <span className="text-xs text-indigo-400 animate-pulse font-medium">Analyzing...</span>}
-                    </div>
-                    <div className="bg-white/[0.03] rounded-lg p-3 border border-white/5 font-serif text-sm text-neutral-300 leading-relaxed whitespace-pre-wrap">
-                      {clause.text}
-                    </div>
-                  </div>
-                ))}
+                    <Mic className="w-4 h-4 text-purple-400" /> Voice Assistant
+                  </button>
+                  <button 
+                    onClick={() => setChatOpen(!chatOpen)}
+                    className="flex items-center gap-2.5 text-sm bg-gradient-to-r from-indigo-600/20 to-indigo-500/10 text-indigo-200 px-6 py-2.5 rounded-2xl hover:from-indigo-600/30 hover:to-indigo-500/20 transition-all font-semibold border border-indigo-500/20 shadow-[0_0_20px_rgba(99,102,241,0.15)] hover:shadow-[0_0_30px_rgba(99,102,241,0.3)]"
+                  >
+                    <MessageSquare className="w-4 h-4 text-indigo-400" /> Copilot Chat
+                  </button>
+                </div>
+                
+                <DocumentViewer 
+                  file={file} 
+                  clauses={session.clauses} 
+                  flags={flags} 
+                  activeClauseId={analyzingClause}
+                  onClauseClick={analyzeClause}
+                  chatClauseId={chatClauseId}
+                  onBoxesReady={setDocumentBoxes}
+                />
               </div>
 
-              <div className="glass-panel rounded-2xl p-6 h-[80vh] overflow-y-auto">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-lg font-medium">Risk Analysis & Leverage</h3>
+              <div className="bg-[#0a0a0c]/80 backdrop-blur-3xl rounded-3xl border border-white/5 shadow-2xl shadow-black/50 p-8 h-[85vh] overflow-y-auto scrollbar-hide relative">
+                <div className="flex justify-between items-center mb-8 sticky top-0 bg-[#0a0a0c]/90 backdrop-blur-xl py-4 -mt-8 z-20 border-b border-white/5">
+                  <h3 className="text-xl font-semibold tracking-tight text-white/90">Risk Analysis & Leverage</h3>
                   <button 
                     onClick={fetchSummaryChecklist}
-                    className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 shadow-md"
+                    className="bg-white hover:bg-neutral-200 text-black text-xs font-bold px-4 py-2 rounded-xl transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(255,255,255,0.2)]"
                   >
-                    <FileText className="w-3.5 h-3.5" /> Summary & Checklist
+                    <FileText className="w-4 h-4" /> Generate Report
                   </button>
                 </div>
                 
@@ -400,20 +425,50 @@ function App() {
                                        : 'bg-green-500/20 text-green-300 border-green-500/30';
                       
                       return (
-                        <div key={id} className={`p-6 rounded-2xl border ${isRisky ? 'bg-neutral-900/50 border-neutral-700/50' : 'bg-green-950/20 border-green-900/30'}`}>
-                          <div className="flex items-start justify-between mb-4">
-                            <h4 className="font-semibold text-lg text-white flex items-center gap-2">
-                              {isRisky ? <ShieldAlert className="w-5 h-5 text-red-400" /> : <CheckCircle2 className="w-5 h-5 text-green-400" />}
+                        <div key={id} className={`p-6 rounded-3xl border ${isRisky ? 'bg-[#0f0f11] border-white/10 shadow-xl' : 'bg-green-950/10 border-green-900/20'}`}>
+                          <div className="flex items-start justify-between mb-6">
+                            <h4 className="font-bold text-xl text-white/95 flex items-center gap-3 tracking-tight">
+                              {isRisky ? <ShieldAlert className="w-6 h-6 text-red-500" /> : <CheckCircle2 className="w-6 h-6 text-emerald-500" />}
                               {analysis.category}
                             </h4>
-                            <span className={`text-xs px-3 py-1 rounded-full font-medium border ${badgeColor}`}>
+                            <span className={`text-xs px-4 py-1.5 rounded-full font-bold uppercase tracking-wider border shadow-sm ${badgeColor}`}>
                               {analysis.risk_level} Risk
                             </span>
                           </div>
                           
-                          <div className="mb-5 bg-indigo-950/20 border border-indigo-500/20 rounded-xl p-4">
-                            <h5 className="text-xs font-semibold text-indigo-300 uppercase tracking-wider mb-2">In Simple Terms</h5>
-                            <p className="text-sm text-neutral-200 leading-relaxed">{analysis.in_simple_terms}</p>
+                          {/* Smart Crop visual for this clause */}
+                          {documentBoxes[id] && isRisky && file && (
+                            <div className="mb-6 rounded-2xl overflow-hidden border-2 border-red-500/20 relative h-32 bg-white/5 flex items-center justify-center shadow-inner">
+                               <div className="absolute top-3 left-3 bg-red-500/90 backdrop-blur-sm text-white text-[9px] uppercase tracking-widest font-bold px-2.5 py-1 rounded-md shadow-lg z-20 flex items-center gap-1.5">
+                                 <ShieldAlert className="w-3 h-3" /> Flagged Region
+                               </div>
+                               <div style={{
+                                 position: 'absolute',
+                                 top: -documentBoxes[id].top + (file.type === 'application/pdf' ? 50 : 20),
+                                 left: -documentBoxes[id].left + 20,
+                                 width: '100%',
+                                 pointerEvents: 'none',
+                                 opacity: 0.95
+                               }}>
+                                 {file.type === 'application/pdf' ? (
+                                   <Document file={file}>
+                                     <Page pageNumber={1} width={600} renderTextLayer={false} renderAnnotationLayer={false} />
+                                   </Document>
+                                 ) : (
+                                   <img 
+                                     src={URL.createObjectURL(file)} 
+                                     className="w-full max-w-2xl filter brightness-95" 
+                                   />
+                                 )}
+                               </div>
+                               {/* Red line strike */}
+                               <div className="absolute top-1/2 left-0 w-full h-1 bg-red-500 shadow-[0_0_20px_rgba(239,68,68,1)] z-10 transform -translate-y-1/2 rotate-1 mix-blend-multiply opacity-80"></div>
+                            </div>
+                          )}
+
+                          <div className="mb-6 bg-gradient-to-br from-indigo-500/10 to-purple-500/5 border border-indigo-500/20 rounded-2xl p-5 shadow-inner">
+                            <h5 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-3 flex items-center gap-2"><Search className="w-3.5 h-3.5"/> In Simple Terms</h5>
+                            <p className="text-[15px] text-white/90 leading-relaxed font-medium">{analysis.in_simple_terms}</p>
                           </div>
                           
                           {isRisky && (
@@ -486,9 +541,9 @@ function App() {
                     initial={{ opacity: 0, y: 20, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                    className="absolute bottom-4 left-4 w-96 h-[500px] glass-panel bg-neutral-900/90 rounded-2xl shadow-2xl flex flex-col z-50 overflow-hidden border border-white/20"
+                    className="absolute bottom-4 left-4 w-96 h-[500px] bg-neutral-950 rounded-2xl shadow-2xl flex flex-col z-[60] overflow-hidden border border-white/20"
                   >
-                    <div className="p-4 border-b border-white/10 flex justify-between items-center bg-black/40">
+                    <div className="p-4 border-b border-white/10 flex justify-between items-center bg-neutral-900">
                       <h3 className="font-medium flex items-center gap-2">
                         <MessageSquare className="w-4 h-4 text-indigo-400" />
                         AI Legal Assistant

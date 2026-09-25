@@ -109,6 +109,9 @@ async function extractText(buffer, mimetype) {
 function segmentClauses(text) {
   let rawSegments = [];
   
+  // Normalize newlines
+  text = text.replace(/\r\n/g, '\n');
+
   // 1. Check if text has explicit CLAUSE X or SECTION X headers
   if (/CLAUSE\s+\d+|SECTION\s+\d+/i.test(text)) {
     rawSegments = text.split(/(?=\b(?:CLAUSE|SECTION)\s+\d+)/i);
@@ -118,8 +121,18 @@ function segmentClauses(text) {
     rawSegments = text.split(/\n\s*\n/);
   } 
   // 3. Fallback: split on line starts with numbered list items like "\n1. "
-  else {
+  else if (/(?=\n\s*\d+\.\s)/.test(text)) {
     rawSegments = text.split(/(?=\n\s*\d+\.\s)/);
+  }
+
+  // 4. Fallback if still only 1 segment: split on newline after a period
+  if (rawSegments.length <= 1) {
+    rawSegments = text.split(/(?<=\.\s*)\n/);
+  }
+
+  // 5. Final fallback for OCR blocks: split by any newline if it's too long
+  if (rawSegments.length <= 1 && text.length > 200) {
+    rawSegments = text.split('\n');
   }
 
   const cleaned = rawSegments

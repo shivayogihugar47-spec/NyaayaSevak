@@ -216,32 +216,7 @@ function VoicePanel({ sessionId, onClose }) {
             </div>
           )}
 
-          {/* Language Selector */}
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-neutral-300 font-medium">
-              <Globe className="w-4 h-4 text-indigo-400" /> Select Spoken Language:
-            </div>
-            <div className="flex gap-2">
-              {[
-                { id: 'en', label: 'English' },
-                { id: 'hi', label: 'Hindi (हिंदी)' },
-                { id: 'kn', label: 'Kannada (ಕನ್ನಡ)' }
-              ].map(lang => (
-                <button
-                  key={lang.id}
-                  disabled={callState === 'active' || callState === 'connecting'}
-                  onClick={() => setLanguage(lang.id)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                    language === lang.id 
-                      ? 'bg-indigo-600 text-white shadow-lg' 
-                      : 'bg-white/5 text-neutral-400 hover:text-white border border-white/5'
-                  }`}
-                >
-                  {lang.label}
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* Language Selector Removed - Vapi handles language detection automatically */}
 
           {/* Call Status Orb & Proactive Opening Briefing */}
           <div className="bg-gradient-to-b from-indigo-950/30 to-black/40 border border-indigo-500/20 rounded-2xl p-6 text-center flex flex-col items-center justify-center relative overflow-hidden">
@@ -269,11 +244,11 @@ function VoicePanel({ sessionId, onClose }) {
             {/* Status Text */}
             <div className="text-sm font-semibold mb-3 tracking-wide uppercase">
               {callState === 'idle' && <span className="text-neutral-400">Ready to Start Voice Session</span>}
-              {callState === 'connecting' && <span className="text-yellow-400">Connecting to Vapi Voice Service...</span>}
+              {callState === 'connecting' && <span className="text-yellow-400">Initializing NyayaCheck Voice...</span>}
               {callState === 'active' && (
                 <span className="text-green-400 flex items-center gap-2 justify-center">
                   <span className="w-2 h-2 rounded-full bg-green-400 animate-ping" />
-                  Voice Call Active ({language.toUpperCase()})
+                  Voice Call Active (Auto-Detect)
                 </span>
               )}
               {callState === 'ended' && <span className="text-neutral-500">Call Ended</span>}

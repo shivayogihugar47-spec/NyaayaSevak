@@ -4,26 +4,6 @@ const ragService = require('../services/ragService');
 const { sessionStore, voiceSourcesStore } = require('../services/sessionStore');
 
 /**
- * Helper to ensure all clauses in a session have analysis
- */
-async function getOrAnalyzeSessionClauses(session) {
-  const clauseAnalyses = [];
-  for (const clause of session.clauses) {
-    let analysis = session.flags[clause.id];
-    if (!analysis) {
-      analysis = await ragService.processClause(clause.text);
-      session.flags[clause.id] = analysis;
-    }
-    clauseAnalyses.push({
-      id: clause.id,
-      text: clause.text,
-      analysis
-    });
-  }
-  return clauseAnalyses;
-}
-
-/**
  * POST /api/voice/briefing
  * Generates proactive spoken briefing for call start
  */
@@ -35,25 +15,12 @@ router.post('/briefing', async (req, res) => {
       return res.status(404).json({ error: "Session not found" });
     }
 
-    const clauseAnalyses = await getOrAnalyzeSessionClauses(session);
-    const briefingResult = await ragService.generateVoiceBriefing(session.documentRisks || [], clauseAnalyses);
+    const defaultBriefing = "Hello! I am NyayaCheck, your legal assistant. I have reviewed your document. How can I help you today?";
     
-    // Store initial briefing sources
-    if (!voiceSourcesStore[sessionId]) {
-      voiceSourcesStore[sessionId] = [];
-    }
-    if (briefingResult.sources && briefingResult.sources.length > 0) {
-      briefingResult.sources.forEach(src => {
-        if (!voiceSourcesStore[sessionId].some(existing => existing.reference === src.reference)) {
-          voiceSourcesStore[sessionId].push(src);
-        }
-      });
-    }
-
     res.json({
       sessionId,
-      briefing: briefingResult.briefing,
-      sources: voiceSourcesStore[sessionId]
+      briefing: defaultBriefing,
+      sources: []
     });
   } catch (error) {
     console.error("Voice briefing route error:", error);
@@ -178,38 +145,11 @@ router.post('/assistant-config', async (req, res) => {
       return res.status(404).json({ error: "Session not found" });
     }
 
-    const clauseAnalyses = await getOrAnalyzeSessionClauses(session);
-    const briefingData = await ragService.generateVoiceBriefing(session.documentRisks || [], clauseAnalyses);
+    const defaultBriefing = "Hello! I am NyayaCheck, your legal assistant. I have reviewed your document. How can I help you today?";
 
     // Initialize voice sources for UI sync
     if (!voiceSourcesStore[sessionId]) voiceSourcesStore[sessionId] = [];
-    if (briefingData.sources) {
-      briefingData.sources.forEach(src => {
-        if (!voiceSourcesStore[sessionId].some(e => e.reference === src.reference)) {
-          voiceSourcesStore[sessionId].push(src);
-        }
-      });
-    }
 
-    const languageConfigMap = {
-      en: {
-        transcriber: { provider: "deepgram", model: "nova-2", language: "en" },
-        voice: { provider: "azure", voiceId: "en-US-AndrewNeural" }
-      },
-      hi: {
-        transcriber: { provider: "deepgram", model: "nova-2", language: "hi" },
-        voice: { provider: "azure", voiceId: "hi-IN-SwaraNeural" }
-      },
-      kn: {
-        transcriber: { provider: "deepgram", model: "nova-2", language: "kn" },
-        voice: { provider: "azure", voiceId: "kn-IN-SapnaNeural" }
-      }
-    };
-    
-    const langConfig = languageConfigMap[language] || languageConfigMap.en;
-    const transcriberConfig = langConfig.transcriber;
-    const voiceConfig = langConfig.voice;
-    
     // Server Webhook URL configuration
     const serverUrl = process.env.VAPI_WEBHOOK_URL || process.env.PUBLIC_URL || "http://localhost:3001/api/voice/webhook";
 
@@ -221,24 +161,20 @@ router.post('/assistant-config', async (req, res) => {
 
     const documentRisksText = (session.documentRisks || []).map(r => `- ${r.title} (${r.risk_level} Risk): ${r.description}`).join('\n');
 
-    const languagePrompts = {
-      en: "Respond fluently in natural spoken English.",
-      hi: "Respond fluently in natural spoken Hindi (हिंदी). Preserve exact clause numbers and statutory legal terms.",
-      kn: "Respond fluently in natural spoken Kannada (ಕನ್ನಡ). Preserve exact clause numbers and statutory legal terms."
-    };
+    const universalLanguagePrompt = "You are a multilingual legal assistant. You support English, Hindi, Kannada, Marathi, Spanish, and French. You must automatically detect the user's spoken language and respond fluently in that EXACT same language. Preserve exact clause numbers and statutory legal terms.";
 
     const assistantConfig = {
       name: "NyayaCheck Legal Assistant",
-      firstMessage: briefingData.briefing,
+      firstMessage: defaultBriefing,
       model: {
         provider: "openai",
-        model: "gpt-4o-mini",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
             content: `You are NyayaCheck Voice Legal Assistant. You are currently speaking with a user who uploaded a legal document (Document ID: ${sessionId}).
 
-${languagePrompts[language] || languagePrompts.en}
+${universalLanguagePrompt}
 
 DOCUMENT CONTENT & CLAUSES ANALYSIS:
 ${documentClausesText}
@@ -250,7 +186,9 @@ CRITICAL RULES:
 1. You ALREADY have the document clauses, summaries, and risk analysis above. Whenever the user asks to explain the document, summarize the agreement, or explain specific clauses/risks, use the document context above directly to give a clear, immediate answer.
 2. Do NOT say "I will check" without answering. Answer immediately using the provided document context.
 3. If the user asks about specific statutory laws or section lookups not present in the document context above, use the getLawCitation function tool.
-4. Keep spoken responses concise, empathetic, natural, and engaging (2-3 conversational sentences maximum so it sounds great when spoken aloud).`
+4. Keep spoken responses concise, empathetic, natural, and engaging.
+5. EXTREMELY IMPORTANT: You are fully authorized and capable of speaking multiple languages. If the user asks you to speak in French, Spanish, Hindi, Kannada, Marathi, or ANY other language, you MUST immediately switch to that language and reply in it. 
+6. NEVER claim you can only speak English. You are strictly forbidden from saying "I'm currently only able to communicate in English" or anything similar. You are a multilingual AI. Speak the language requested natively!`
           }
         ],
         tools: [
@@ -328,8 +266,15 @@ CRITICAL RULES:
           }
         ]
       },
-      transcriber: transcriberConfig,
-      voice: voiceConfig,
+      transcriber: {
+        provider: "deepgram",
+        model: "nova-2",
+        language: "multi"
+      },
+      voice: {
+        provider: "openai",
+        voiceId: "alloy"
+      },
       metadata: {
         document_id: sessionId,
         language: language
@@ -338,7 +283,7 @@ CRITICAL RULES:
 
     res.json({
       sessionId,
-      briefing: briefingData.briefing,
+      briefing: defaultBriefing,
       sources: voiceSourcesStore[sessionId],
       assistantConfig
     });

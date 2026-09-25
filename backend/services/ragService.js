@@ -47,26 +47,18 @@ async function getRealEmbedding(text) {
   return `[${Array.from(output.data).join(',')}]`;
 }
 
-async function analyzeClauseWithLLM(clauseText, retrievedLaws, attempt = 1) {
-const systemPrompt = `You are a world-class legal assistant helping non-lawyers understand rental agreements and contracts.
-Analyze the given contract clause against the provided statutory law sections.
-Return ONLY a strictly valid JSON object conforming to this EXACT schema (do not wrap it in markdown block quotes like \`\`\`json):
+async function analyzeClauseWithLLM(clauseText, retrievedLaws, attempt = 1, language = 'English') {
+const systemPrompt = `You are a legal assistant. Analyze the contract clause against the provided laws.
+Output MUST be ONLY valid JSON matching this schema:
 {
-  "category": "A short, 1-3 word topic (e.g. 'Security Deposit', 'Indemnity')",
+  "category": "Short topic",
   "risk_level": "High" | "Medium" | "Low" | "Safe",
-  "in_simple_terms": "Explain exactly what this clause means to a 5th grader in plain, conversational English.",
-  "legal_issue": "If this is risky or unfair, explain exactly why (or how it violates the provided law). Reference the 'TYPICAL CLAUSE CONFLICT' in the provided laws. If perfectly safe, write 'None'.",
-  "recommended_action": "Actionable advice on what the tenant/party should ask to change or remove.",
-  "cited_law": "The specific Section X of Act Y that is violated (or null if no law is violated)",
+  "in_simple_terms": "Explain what this means simply.",
+  "legal_issue": "Explain if it is risky. If safe, write 'None'.",
+  "recommended_action": "What should they do?",
+  "cited_law": "Law section or null",
   "confidence_level": "High" | "Medium" | "Low"
 }
-
-Rules:
-1. "in_simple_terms" must be EXTREMELY easy to understand. No legal jargon.
-2. "risk_level" must be exactly one of: High, Medium, Low, Safe.
-3. Do NOT invent citations. Use only the Provided Laws context. Ensure you read the 'TYPICAL CLAUSE CONFLICT' sections to see if the clause matches known unfair practices.
-4. If you cite the Model Tenancy Act, you MUST append this exact caveat: "(Model Tenancy Act — binding only in states that have adopted it; verify local applicability)".
-5. NEVER flag a risk (High/Medium) without a real retrieved citation. If you cannot find a specific law in the context to back up the risk, you must mark it as 'Safe' or 'Low' risk and state you have low confidence.
 
 Provided Laws:
 ${retrievedLaws.map(l => `${l.act_name}, Section ${l.section_number}:\n${l.content}`).join('\n\n')}`;
@@ -77,7 +69,7 @@ ${retrievedLaws.map(l => `${l.act_name}, Section ${l.section_number}:\n${l.conte
         model: MODEL,
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Clause: "${clauseText}"` }
+          { role: 'user', content: `Clause to analyze:\n"${clauseText}"` }
         ],
         stream: true,
         response_format: { type: "json_object" }
@@ -108,7 +100,7 @@ ${retrievedLaws.map(l => `${l.act_name}, Section ${l.section_number}:\n${l.conte
   }
 }
 
-async function processClause(clauseText) {
+async function processClause(clauseText, language = 'English') {
   const embeddingStr = await getRealEmbedding(clauseText);
   let retrievedLaws = [];
   try {
@@ -135,18 +127,72 @@ async function processClause(clauseText) {
     return { 
       category: "Uncategorized", 
       risk_level: "Safe",
-      in_simple_terms: "This clause doesn't seem to trigger any standard statutory regulations we track.",
+      in_simple_terms: language === 'Kannada' ? "ಈ ಷರತ್ತು ಯಾವುದೇ ಪ್ರಮಾಣಿತ ಶಾಸನಬದ್ಧ ನಿಯಮಗಳನ್ನು ಉಲ್ಲಂಘಿಸುವುದಿಲ್ಲ." : language === 'Hindi' ? "यह खंड किसी भी वैधानिक नियम का उल्लंघन नहीं करता है।" : "This clause doesn't seem to trigger any standard statutory regulations we track.",
       legal_issue: "None",
-      recommended_action: "No action needed unless you have specific concerns.",
+      recommended_action: language === 'Kannada' ? "ಯಾವುದೇ ಕ್ರಮ ಅಗತ್ಯವಿಲ್ಲ." : language === 'Hindi' ? "किसी कार्रवाई की आवश्यकता नहीं है।" : "No action needed.",
       cited_law: null,
       confidence_level: "High"
     };
   }
-  return await analyzeClauseWithLLM(clauseText, retrievedLaws);
+  
+  const result = await analyzeClauseWithLLM(clauseText, retrievedLaws, 1, 'English');
+  if (language !== 'English') {
+    return await translateLLMResult(result, language, clauseText);
+  }
+  return result;
+}
+
+async function translateLLMResult(parsedJson, language, clauseText) {
+  const systemContent = language === 'Auto-Detect'
+    ? `You are a translator. First, DETECT the language of this original text: "${clauseText.substring(0, 300)}...". 
+Then, translate the following 4 text sections entirely into that EXACT same detected language.
+Output the translations in the exact same order, separated by a line with exactly "|||" and nothing else.
+Do NOT output JSON. Do NOT output any conversational filler. Just the translated sections separated by "|||".`
+    : `You are a translator. Translate the following 4 text sections into ${language}.
+Output the translations in the exact same order, separated by a line with exactly "|||" and nothing else.
+Do NOT output JSON. Do NOT output any conversational filler. Just the translated sections separated by "|||".`;
+
+  try {
+    const stream = await openrouter.chat.send({
+      chatRequest: {
+        model: MODEL,
+        messages: [
+          { role: 'system', content: systemContent },
+          { 
+            role: 'user', 
+            content: `1. ${parsedJson.category}\n\n|||\n\n2. ${parsedJson.in_simple_terms}\n\n|||\n\n3. ${parsedJson.legal_issue}\n\n|||\n\n4. ${parsedJson.recommended_action}`
+          }
+        ],
+        stream: true
+      }
+    });
+
+    let rawResponse = "";
+    for await (const chunk of stream) {
+      const content = chunk.choices[0]?.delta?.content;
+      if (content) rawResponse += content;
+    }
+    
+    // Split by the delimiter, cleaning up any numbers or prefixes the LLM might have added
+    const parts = rawResponse.split('|||').map(p => p.replace(/^\d+\.\s*/, '').trim());
+    
+    if (parts.length >= 4) {
+      return {
+        ...parsedJson,
+        category: parts[0] || parsedJson.category,
+        in_simple_terms: parts[1] || parsedJson.in_simple_terms,
+        legal_issue: parts[2] || parsedJson.legal_issue,
+        recommended_action: parts[3] || parsedJson.recommended_action,
+      };
+    }
+    return parsedJson;
+  } catch (e) {
+    return parsedJson;
+  }
 }
 
 // New: Chat function
-async function generateChatResponse(question, documentClauses = []) {
+async function generateChatResponse(question, documentClauses = [], language = 'English') {
   let retrievedLaws = [];
   try {
     const embeddingStr = await getRealEmbedding(question);
@@ -171,6 +217,7 @@ async function generateChatResponse(question, documentClauses = []) {
   const lawsText = retrievedLaws.map(l => `${l.act_name} Sec ${l.section_number}: ${l.content}`).join('\n\n');
 
   const prompt = `You are NyayaCheck, a helpful AI legal assistant. Answer the user's question clearly based on the provided document clauses and retrieved statutory laws.
+  IMPORTANT: You must respond entirely in ${language}.
 
 Document Context:
 ${fullDocText.substring(0, 4000)}
@@ -179,12 +226,11 @@ Retrieved Laws Context:
 ${retrievedLaws.length > 0 ? lawsText : "NONE FOUND"}
 
 Rules:
-1. For greetings (e.g. "hi", "hello", "hey"), greet the user warmly and invite them to ask any question about their document or legal rights.
-2. For specific questions about the document or laws, answer accurately using the contexts provided.
-3. Do NOT invent citations. Use only the Provided Laws context. If citing the Model Tenancy Act, append: "(Model Tenancy Act — binding only in states that have adopted it; verify local applicability)".
-4. Output your response as a JSON object matching this exact schema:
+1. For greetings, greet the user warmly and invite them to ask any question.
+2. Answer accurately using the contexts provided.
+3. Output your response as a JSON object matching this exact schema:
 {
-  "answer": "Your detailed answer to the question",
+  "answer": "Your detailed answer to the question in ${language}",
   "sources": [
     { "type": "clause" | "law", "reference": "e.g. Clause 2 or Indian Contract Act, Sec 74" }
   ]
@@ -226,7 +272,7 @@ User Question: ${question}`;
 }
 
 // New: Negotiation Message Generator
-async function generateNegotiationMessage(clauseText, analysis) {
+async function generateNegotiationMessage(clauseText, analysis, language = 'English') {
   const prompt = `You are a polite but firm legal assistant helping a tenant draft a negotiation email to their landlord. 
 The landlord proposed this clause: "${clauseText}"
 This clause is problematic because: "${analysis.legal_issue}" 
@@ -234,12 +280,12 @@ Relevant Law: ${analysis.cited_law || 'General fairness'}
 Your goal is to achieve this outcome: "${analysis.recommended_action}"
 
 Draft a short, professional, 1-2 paragraph message that the tenant can copy-paste into an email or WhatsApp to ask the landlord to amend or remove this clause gracefully.
+IMPORTANT: You MUST write the message entirely in ${language}.
 
 CRITICAL RULES:
 1. You MUST explicitly reference the original clause and the specific law in your message.
-2. Ensure the message flows naturally and is grammatically correct. Do NOT clumsily paste template variables like "Regarding [clause]" into the middle of another sentence. It must read as a coherent, human-written letter.
-3. Do not offer generic legal advice.
-4. Keep the tone collaborative but firm on the legal boundary.`;
+2. Ensure the message flows naturally.
+3. Keep the tone collaborative but firm.`;
 
   const response = await openrouter.chat.send({
     chatRequest: {

@@ -52,7 +52,7 @@ router.post('/upload', upload.single('document'), async (req, res) => {
  * Analyzes a specific clause from the document.
  */
 router.post('/analyze-clause', async (req, res) => {
-  const { sessionId, clauseId } = req.body;
+  const { sessionId, clauseId, language = 'English' } = req.body;
 
   if (!sessionId || !sessionStore[sessionId]) {
     return res.status(404).json({ error: 'Session not found' });
@@ -65,7 +65,7 @@ router.post('/analyze-clause', async (req, res) => {
 
   try {
     // Process clause with RAG
-    const analysis = await ragService.processClause(clause.text);
+    const analysis = await ragService.processClause(clause.text, language);
     
     // Save to session
     sessionStore[sessionId].flags[clauseId] = analysis;
@@ -80,11 +80,11 @@ router.post('/analyze-clause', async (req, res) => {
 // POST /api/chat
 router.post('/chat', async (req, res) => {
   try {
-    const { sessionId, question } = req.body;
+    const { sessionId, question, language = 'English' } = req.body;
     const session = sessionStore[sessionId];
     if (!session) return res.status(404).json({ error: "Session not found" });
 
-    const chatData = await ragService.generateChatResponse(question, session.clauses);
+    const chatData = await ragService.generateChatResponse(question, session.clauses, language);
     res.json({ answer: chatData.answer, sources: chatData.sources || [] });
   } catch (err) {
     console.error(err);
@@ -95,8 +95,8 @@ router.post('/chat', async (req, res) => {
 // POST /api/negotiate
 router.post('/negotiate', async (req, res) => {
   try {
-    const { clauseText, analysis } = req.body;
-    const message = await ragService.generateNegotiationMessage(clauseText, analysis);
+    const { clauseText, analysis, language = 'English' } = req.body;
+    const message = await ragService.generateNegotiationMessage(clauseText, analysis, language);
     res.json({ message });
   } catch (err) {
     console.error(err);
