@@ -17,6 +17,7 @@ import {
   HelpCircle,
   Mic,
   Search,
+  Menu,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
@@ -36,6 +37,7 @@ function App() {
   const [view, setView] = useState("landing"); // 'landing' or 'app'
   const [appMode, setAppMode] = useState("analyze"); // 'analyze' or 'compare'
   const [language, setLanguage] = useState("English");
+  const [isAppMobileMenuOpen, setIsAppMobileMenuOpen] = useState(false);
 
   // Analyze State
   const [file, setFile] = useState(null);
@@ -255,7 +257,7 @@ function App() {
     >
       {view === "app" && (
         <header
-          className="border-b border-neutral-800 bg-[#111113] sticky top-0 z-40 shadow-sm"
+          className="border-b border-neutral-800 bg-[#111113] sticky top-0 z-40 shadow-sm relative"
           role="banner"
           aria-label="Main Navigation"
         >
@@ -279,7 +281,8 @@ function App() {
                 Nyaya<span className="text-indigo-500">Check</span>
               </h1>
             </div>
-            <div className="flex gap-2 bg-[#09090b] border border-neutral-800 rounded-lg p-1">
+            
+            <div className="hidden md:flex gap-2 bg-[#09090b] border border-neutral-800 rounded-lg p-1">
               <button
                 onClick={() => {
                   setAppMode("analyze");
@@ -311,7 +314,61 @@ function App() {
                 <option value="Kannada">ಕನ್ನಡ (Kannada)</option>
               </select>
             </div>
+
+            <button 
+              className="md:hidden text-neutral-400 hover:text-white"
+              onClick={() => setIsAppMobileMenuOpen(!isAppMobileMenuOpen)}
+            >
+              {isAppMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
           </div>
+
+          {/* Mobile App Menu */}
+          {isAppMobileMenuOpen && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="md:hidden absolute top-16 left-0 w-full border-b border-neutral-800 bg-[#111113] p-4 flex flex-col gap-4 shadow-2xl z-50"
+            >
+              <button
+                onClick={() => {
+                  setAppMode("analyze");
+                  setSession(null);
+                  setCompareResults(null);
+                  setIsAppMobileMenuOpen(false);
+                }}
+                className={`px-4 py-3 rounded-md text-sm font-medium transition-colors text-left ${appMode === "analyze" ? "bg-neutral-800 text-white shadow-sm" : "text-neutral-400 hover:text-white hover:bg-neutral-800/50"}`}
+              >
+                Single Document
+              </button>
+              <button
+                onClick={() => {
+                  setAppMode("compare");
+                  setSession(null);
+                  setCompareResults(null);
+                  setIsAppMobileMenuOpen(false);
+                }}
+                className={`px-4 py-3 rounded-md text-sm font-medium transition-colors flex items-center gap-2 text-left ${appMode === "compare" ? "bg-neutral-800 text-white shadow-sm" : "text-neutral-400 hover:text-white hover:bg-neutral-800/50"}`}
+              >
+                <ArrowLeftRight className="w-4 h-4" /> Compare Versions
+              </button>
+              <div className="border-t border-neutral-800 pt-4 mt-2">
+                <label className="block text-xs text-neutral-500 mb-2 px-1 uppercase tracking-wider">Select Language</label>
+                <select
+                  value={language}
+                  onChange={(e) => {
+                    setLanguage(e.target.value);
+                    setIsAppMobileMenuOpen(false);
+                  }}
+                  className="w-full bg-[#09090b] border border-neutral-700 text-neutral-300 text-sm rounded-md px-3 py-2.5 focus:outline-none focus:border-indigo-500 cursor-pointer transition-colors"
+                >
+                  <option value="English">English</option>
+                  <option value="Hindi">हिन्दी (Hindi)</option>
+                  <option value="Kannada">ಕನ್ನಡ (Kannada)</option>
+                </select>
+              </div>
+            </motion.div>
+          )}
         </header>
       )}
 

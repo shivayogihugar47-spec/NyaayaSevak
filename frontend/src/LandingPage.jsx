@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
   ShieldAlert,
@@ -12,9 +12,12 @@ import {
   Layers,
   User,
   MessageSquare,
+  Menu,
+  X,
 } from "lucide-react";
 
 export default function LandingPage({ setView, setAppMode }) {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100 font-sans selection:bg-indigo-500/30 overflow-x-hidden">
       {/* Global Navbar */}
@@ -44,7 +47,7 @@ export default function LandingPage({ setView, setAppMode }) {
             </a>
           </nav>
           <div className="flex items-center gap-4">
-            <button className="text-sm font-medium text-neutral-400 hover:text-white transition-colors hidden sm:block">
+            <button className="text-sm font-medium text-neutral-400 hover:text-white transition-colors hidden md:block">
               Sign In
             </button>
             <button
@@ -52,12 +55,55 @@ export default function LandingPage({ setView, setAppMode }) {
                 setView("app");
                 setAppMode("analyze");
               }}
-              className="bg-white text-black px-4 py-2 rounded-full text-sm font-bold hover:bg-neutral-200 transition-colors shadow-[0_0_20px_rgba(255,255,255,0.1)]"
+              className="bg-white text-black px-4 py-2 rounded-full text-sm font-bold hover:bg-neutral-200 transition-colors shadow-[0_0_20px_rgba(255,255,255,0.1)] hidden md:block"
             >
               Start Free Trial
             </button>
+            <button 
+              className="md:hidden text-neutral-400 hover:text-white"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="md:hidden border-t border-white/5 bg-neutral-950 px-6 py-4 flex flex-col gap-4 absolute w-full left-0 shadow-2xl"
+          >
+            <a href="#features" className="text-neutral-400 hover:text-white transition-colors py-2 text-lg font-medium" onClick={() => setIsMobileMenuOpen(false)}>
+              Features
+            </a>
+            <a href="#how-it-works" className="text-neutral-400 hover:text-white transition-colors py-2 text-lg font-medium" onClick={() => setIsMobileMenuOpen(false)}>
+              How it Works
+            </a>
+            <a href="#security" className="text-neutral-400 hover:text-white transition-colors py-2 text-lg font-medium" onClick={() => setIsMobileMenuOpen(false)}>
+              Security
+            </a>
+            <a href="#pricing" className="text-neutral-400 hover:text-white transition-colors py-2 text-lg font-medium" onClick={() => setIsMobileMenuOpen(false)}>
+              Pricing
+            </a>
+            <div className="flex flex-col gap-3 mt-2 pt-4 border-t border-white/5">
+              <button className="text-lg font-medium text-neutral-400 hover:text-white transition-colors py-2 text-left w-full">
+                Sign In
+              </button>
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  setView("app");
+                  setAppMode("analyze");
+                }}
+                className="bg-white text-black px-4 py-3 rounded-full text-lg font-bold hover:bg-neutral-200 transition-colors w-full text-center mt-2"
+              >
+                Start Free Trial
+              </button>
+            </div>
+          </motion.div>
+        )}
       </header>
 
       {/* Hero Section */}
