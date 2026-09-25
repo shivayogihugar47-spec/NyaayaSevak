@@ -576,7 +576,7 @@ function App() {
                   )}
                 </div>
               </div>
-            </motion.div>
+
 {/* Summary Checklist Export Modal */}
               <AnimatePresence>
                 {summaryOpen && (
