@@ -16,12 +16,10 @@ function getVapiConstructor(sdk) {
 }
 
 // Replace with VAPI Public Key or retrieve from env
-const VAPI_PUBLIC_KEY = import.meta.env.VITE_VAPI_PUBLIC_KEY || "e1975e52-168a-4db3-a9d0-6216ecdbb88d";
-
-
+const VAPI_PUBLIC_KEY = import.meta.env.VITE_VAPI_PUBLIC_KEY;
+const VAPI_ASSISTANT_ID = import.meta.env.VITE_VAPI_ASSISTANT_ID;
 
 function VoicePanel({ sessionId, onClose }) {
-  const [language, setLanguage] = useState('en'); // 'en', 'hi', 'kn'
   const [callState, setCallState] = useState('idle'); // 'idle', 'connecting', 'active', 'ended'
   const [isMuted, setIsMuted] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -39,7 +37,7 @@ function VoicePanel({ sessionId, onClose }) {
     if (callState === 'active' || callState === 'connecting') {
       const fetchSources = async () => {
         try {
-          const res = await axios.get(`/api/voice/sources/${sessionId}`);
+          const res = await axios.get(`/api/voice/sources/${sessionId}`, { withCredentials: true });
           if (res.data && res.data.sources) {
             setSources(res.data.sources);
           }
@@ -57,7 +55,7 @@ function VoicePanel({ sessionId, onClose }) {
   useEffect(() => {
     const loadBriefing = async () => {
       try {
-        const res = await axios.post('/api/voice/briefing', { sessionId });
+        const res = await axios.post('/api/voice/briefing', { sessionId }, { withCredentials: true });
         setBriefing(res.data.briefing);
         if (res.data.sources) setSources(res.data.sources);
       } catch (e) {
@@ -72,15 +70,15 @@ function VoicePanel({ sessionId, onClose }) {
       setCallState('connecting');
       setErrorMsg(null);
 
-      // Fetch dynamic Vapi assistant config
-      const configRes = await axios.post('/api/voice/assistant-config', {
-        sessionId,
-        language
-      });
-
-      const { assistantConfig, briefing: proactiveText, sources: initialSources } = configRes.data;
-      setBriefing(proactiveText);
-      if (initialSources) setSources(initialSources);
+      if (!VAPI_PUBLIC_KEY) {
+        throw new Error("VITE_VAPI_PUBLIC_KEY environment variable is missing.");
+      }
+      if (!VAPI_ASSISTANT_ID) {
+        throw new Error("VITE_VAPI_ASSISTANT_ID environment variable is missing.");
+      }
+      if (!sessionId) {
+        throw new Error("Document context is missing. Cannot start call.");
+      }
 
       // Initialize Vapi client safely
       const VapiClass = getVapiConstructor(VapiSDK);
@@ -93,7 +91,7 @@ function VoicePanel({ sessionId, onClose }) {
 
       vapi.on('call-start', () => {
         setCallState('active');
-        setTranscript(prev => [...prev, { role: 'assistant', text: proactiveText }]);
+        setTranscript(prev => [...prev, { role: 'assistant', text: briefing }]);
       });
 
       vapi.on('call-end', () => {
@@ -116,7 +114,7 @@ function VoicePanel({ sessionId, onClose }) {
         
         // Listen for function call responses to update sources instantly
         if (message.type === 'function-call' || message.type === 'tool-calls') {
-          axios.get(`/api/voice/sources/${sessionId}`).then(res => {
+          axios.get(`/api/voice/sources/${sessionId}`, { withCredentials: true }).then(res => {
             if (res.data?.sources) setSources(res.data.sources);
           }).catch(() => {});
         }
@@ -148,16 +146,25 @@ function VoicePanel({ sessionId, onClose }) {
         if (rawString.includes('401') || rawString.includes('Unauthorized')) {
           setErrorMsg("Vapi Public Key Unauthorized (401). Please verify VITE_VAPI_PUBLIC_KEY in frontend/.env.");
         } else if (rawString.includes('400') || rawString.includes('Bad Request')) {
-          setErrorMsg("Voice configuration error (400 Bad Request). Transcriber model for selected language was rejected by Vapi.");
+          setErrorMsg("Voice configuration error (400 Bad Request).");
         } else {
           setErrorMsg("Voice connection failed: " + detailStr);
         }
         setCallState('idle');
       });
 
-
-      // Start call with inline assistant configuration
-      await vapi.start(assistantConfig);
+      // Start call with configured Assistant ID and bind document_id and user_id as metadata
+      const userId = localStorage.getItem('userId') || 'anon_' + Date.now();
+      localStorage.setItem('userId', userId);
+      
+      await vapi.start(VAPI_ASSISTANT_ID, {
+        assistantOverrides: {
+          metadata: {
+            document_id: sessionId,
+            user_id: userId
+          }
+        }
+      });
 
     } catch (err) {
       console.error("Start Call Error:", err);

@@ -93,6 +93,10 @@ function App() {
     const formData = new FormData();
     if (file) formData.append('document', file);
     if (rawText) formData.append('text', rawText);
+    
+    const userId = localStorage.getItem('userId') || 'anon_' + Date.now();
+    localStorage.setItem('userId', userId);
+    formData.append('userId', userId);
 
     try {
       const res = await axios.post('/api/upload', formData, {
@@ -199,13 +203,13 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-neutral-100 font-sans selection:bg-indigo-500/30 pb-10 relative overflow-hidden">
+    <div className="min-h-screen bg-[#09090b] text-neutral-100 font-sans selection:bg-indigo-500/30 pb-10 relative overflow-hidden" role="application">
       
       {view === 'app' && (
-        <header className="border-b border-neutral-800 bg-[#111113] sticky top-0 z-40 shadow-sm">
+        <header className="border-b border-neutral-800 bg-[#111113] sticky top-0 z-40 shadow-sm" role="banner" aria-label="Main Navigation">
           <div className="w-full px-6 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => {setView('landing'); setSession(null); setCompareResults(null);}}>
-              <ShieldAlert className="w-6 h-6 text-indigo-500" />
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => {setView('landing'); setSession(null); setCompareResults(null);}} role="button" tabIndex="0" aria-label="Go to Home">
+              <ShieldAlert className="w-6 h-6 text-indigo-500" aria-hidden="true" />
               <h1 className="text-xl font-semibold tracking-tight">Nyaya<span className="text-indigo-500">Check</span></h1>
             </div>
             <div className="flex gap-2 bg-[#09090b] border border-neutral-800 rounded-lg p-1">
@@ -236,7 +240,7 @@ function App() {
         </header>
       )}
 
-      <main className={`${view === 'app' ? 'w-full px-6 py-6' : ''}`}>
+      <main role="main" aria-label="Application Content" className={`${view === 'app' ? 'w-full px-6 py-6' : ''}`}>
         <AnimatePresence mode="wait">
           {view === 'landing' ? (
             <motion.div 

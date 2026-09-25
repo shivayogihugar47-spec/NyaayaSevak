@@ -39,7 +39,8 @@ router.post('/upload', upload.single('document'), async (req, res) => {
 
     // Generate a temporary session ID
     const sessionId = Date.now().toString();
-    const sessionObj = { clauses, flags: {}, documentRisks };
+    const userId = req.body.userId || 'anon_' + sessionId;
+    const sessionObj = { clauses, flags: {}, documentRisks, userId };
     sessionStore[sessionId] = sessionObj;
     await saveSession(sessionId, sessionObj);
 
