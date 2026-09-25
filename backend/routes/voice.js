@@ -151,7 +151,7 @@ router.post('/assistant-config', async (req, res) => {
     if (!voiceSourcesStore[sessionId]) voiceSourcesStore[sessionId] = [];
 
     // Server Webhook URL configuration
-    const serverUrl = process.env.VAPI_WEBHOOK_URL || process.env.PUBLIC_URL || "http://localhost:3001/api/voice/webhook";
+    const serverUrl = process.env.VAPI_WEBHOOK_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/api/voice/webhook` : (process.env.PUBLIC_URL || "http://localhost:3001/api/voice/webhook"));
 
     // Format full document context for system prompt
     const documentClausesText = session.clauses.map(c => {
