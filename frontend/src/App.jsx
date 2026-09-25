@@ -388,7 +388,9 @@ function App() {
                   </h3>
                   <button 
                     onClick={() => setVoiceOpen(true)}
-                    className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors shadow-sm"
+                    aria-label="Open Voice Assistant"
+                    title="Open Voice Assistant"
+                    className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors shadow-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none"
                   >
                     <Mic className="w-3.5 h-3.5" /> Voice Assistant
                   </button>
@@ -788,7 +790,8 @@ function App() {
                   </div>
                   <button 
                     onClick={() => setCompareResults(null)}
-                    className="bg-white text-black hover:bg-neutral-200 px-4 py-2 rounded-lg font-bold transition-colors text-sm shadow-sm"
+                    aria-label="Start New Comparison"
+                    className="bg-white text-black hover:bg-neutral-200 px-4 py-2 rounded-lg font-bold transition-colors text-sm shadow-sm focus:ring-2 focus:ring-white focus:outline-none"
                   >
                     New Comparison
                   </button>

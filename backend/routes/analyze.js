@@ -4,7 +4,12 @@ const { extractText, segmentClauses } = require('../services/documentService');
 const ragService = require('../services/ragService');
 
 const router = express.Router();
-const upload = multer({ storage: multer.memoryStorage() });
+
+// Efficiency & Security: Limit file upload size to 5MB to prevent memory exhaustion
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 } 
+});
 
 const { sessionStore, getSession, saveSession } = require('../services/sessionStore');
 
