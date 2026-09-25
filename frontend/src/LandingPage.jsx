@@ -40,14 +40,7 @@ export default function LandingPage({ setView, setAppMode }) {
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[400px] h-[300px] bg-purple-600/20 rounded-full blur-[100px] pointer-events-none"></div>
 
         <div className="max-w-7xl mx-auto px-6 relative z-10 flex flex-col items-center text-center">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold tracking-widest uppercase mb-8"
-          >
-            NyayaCheck 2.0 is now live
-          </motion.div>
+
 
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
@@ -103,7 +96,7 @@ export default function LandingPage({ setView, setAppMode }) {
               <div className="w-3 h-3 rounded-full bg-green-500/80"></div>
             </div>
             <img 
-              src="/dashboard-mockup.png" 
+              src="/nyayacheck-hero.png" 
               alt="NyayaCheck Dashboard" 
               className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity"
             />
@@ -111,19 +104,7 @@ export default function LandingPage({ setView, setAppMode }) {
         </div>
       </section>
 
-      {/* Trusted By Strip */}
-      <section className="border-y border-white/5 bg-white/[0.01] py-10">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col items-center">
-          <p className="text-xs font-semibold text-neutral-500 uppercase tracking-widest mb-8">Trusted by modern legal teams</p>
-          <div className="flex flex-wrap justify-center gap-12 md:gap-24 opacity-40 grayscale">
-            {/* Placeholder Logos built with Lucide for aesthetic */}
-            <div className="flex items-center gap-2 font-bold text-xl"><Scale className="w-6 h-6"/> LexCorp</div>
-            <div className="flex items-center gap-2 font-bold text-xl"><ShieldCheck className="w-6 h-6"/> Sentinel Law</div>
-            <div className="flex items-center gap-2 font-bold text-xl"><Layers className="w-6 h-6"/> Zenith Partners</div>
-            <div className="flex items-center gap-2 font-bold text-xl"><FileSignature className="w-6 h-6"/> Apex Legal</div>
-          </div>
-        </div>
-      </section>
+
 
       {/* Bento Box Grid */}
       <section id="features" className="py-32">
