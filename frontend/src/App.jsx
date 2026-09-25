@@ -19,7 +19,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 function App() {
   const [view, setView] = useState('landing'); // 'landing' or 'app'
   const [appMode, setAppMode] = useState('analyze'); // 'analyze' or 'compare'
-  const [language, setLanguage] = useState('Auto-Detect');
+  const [language, setLanguage] = useState('English');
   
   // Analyze State
   const [file, setFile] = useState(null);
@@ -214,6 +214,16 @@ function App() {
               >
                 <ArrowLeftRight className="w-4 h-4" /> Compare Versions
               </button>
+              
+              <select 
+                value={language} 
+                onChange={(e) => setLanguage(e.target.value)}
+                className="bg-[#09090b] border border-neutral-700 text-neutral-300 text-sm rounded-md px-3 py-1.5 focus:outline-none focus:border-indigo-500 cursor-pointer transition-colors ml-2"
+              >
+                <option value="English">English</option>
+                <option value="Hindi">हिन्दी (Hindi)</option>
+                <option value="Kannada">ಕನ್ನಡ (Kannada)</option>
+              </select>
             </div>
           </div>
         </header>
