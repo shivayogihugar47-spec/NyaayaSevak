@@ -66,16 +66,14 @@ Provided Laws:
 ${retrievedLaws.map(l => `${l.act_name}, Section ${l.section_number}:\n${l.content}`).join('\n\n')}`;
 
   try {
-    const stream = await openrouter.chat.send({
-      chatRequest: {
-        model: MODEL,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Clause to analyze:\n"${clauseText}"` }
-        ],
-        stream: true,
-        response_format: { type: "json_object" }
-      }
+    const stream = await openrouter.chat.completions.create({
+      model: MODEL,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `Clause to analyze:\n"${clauseText}"` }
+      ],
+      stream: true,
+      response_format: { type: "json_object" }
     });
 
     let rawResponse = "";
@@ -155,18 +153,16 @@ Output the translations in the exact same order, separated by a line with exactl
 Do NOT output JSON. Do NOT output any conversational filler. Just the translated sections separated by "|||".`;
 
   try {
-    const stream = await openrouter.chat.send({
-      chatRequest: {
-        model: MODEL,
-        messages: [
-          { role: 'system', content: systemContent },
-          { 
-            role: 'user', 
-            content: `1. ${parsedJson.category}\n\n|||\n\n2. ${parsedJson.in_simple_terms}\n\n|||\n\n3. ${parsedJson.legal_issue}\n\n|||\n\n4. ${parsedJson.recommended_action}`
-          }
-        ],
-        stream: true
-      }
+    const stream = await openrouter.chat.completions.create({
+      model: MODEL,
+      messages: [
+        { role: 'system', content: systemContent },
+        { 
+          role: 'user', 
+          content: `1. ${parsedJson.category}\n\n|||\n\n2. ${parsedJson.in_simple_terms}\n\n|||\n\n3. ${parsedJson.legal_issue}\n\n|||\n\n4. ${parsedJson.recommended_action}`
+        }
+      ],
+      stream: true
     });
 
     let rawResponse = "";
@@ -241,12 +237,10 @@ Rules:
 User Question: ${question}`;
 
   try {
-    const response = await openrouter.chat.send({
-      chatRequest: {
-        model: MODEL,
-        messages: [{ role: 'user', content: prompt }],
-        response_format: { type: "json_object" }
-      }
+    const response = await openrouter.chat.completions.create({
+      model: MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      response_format: { type: "json_object" }
     });
 
     let rawResponse = response.choices?.[0]?.message?.content || "";
@@ -289,11 +283,9 @@ CRITICAL RULES:
 2. Ensure the message flows naturally.
 3. Keep the tone collaborative but firm.`;
 
-  const response = await openrouter.chat.send({
-    chatRequest: {
-      model: MODEL,
-      messages: [{ role: 'user', content: prompt }]
-    }
+  const response = await openrouter.chat.completions.create({
+    model: MODEL,
+    messages: [{ role: 'user', content: prompt }]
   });
 
   return response.choices[0]?.message?.content || "";
@@ -324,12 +316,10 @@ Format your response as a valid JSON object matching this schema exactly (no mar
 }`;
 
   try {
-    const response = await openrouter.chat.send({
-      chatRequest: {
-        model: MODEL,
-        messages: [{ role: 'user', content: prompt }],
-        response_format: { type: "json_object" }
-      }
+    const response = await openrouter.chat.completions.create({
+      model: MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      response_format: { type: "json_object" }
     });
 
     let rawResponse = response.choices?.[0]?.message?.content || "";
@@ -367,12 +357,10 @@ Output a JSON object matching this schema exactly:
 If no document-level risks are found, return an empty array for "document_risks".`;
 
   try {
-    const response = await openrouter.chat.send({
-      chatRequest: {
-        model: MODEL,
-        messages: [{ role: 'user', content: prompt }],
-        response_format: { type: "json_object" }
-      }
+    const response = await openrouter.chat.completions.create({
+      model: MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      response_format: { type: "json_object" }
     });
 
     let rawResponse = response.choices?.[0]?.message?.content || "";
@@ -439,12 +427,10 @@ CRITICAL RULES:
 }`;
 
   try {
-    const response = await openrouter.chat.send({
-      chatRequest: {
-        model: MODEL,
-        messages: [{ role: 'user', content: prompt }],
-        response_format: { type: "json_object" }
-      }
+    const response = await openrouter.chat.completions.create({
+      model: MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      response_format: { type: "json_object" }
     });
 
     let rawResponse = response.choices?.[0]?.message?.content || "";
@@ -550,11 +536,9 @@ Rules:
 4. End by inviting the user to ask questions about any clause or law.`;
 
   try {
-    const response = await openrouter.chat.send({
-      chatRequest: {
-        model: MODEL,
-        messages: [{ role: 'user', content: prompt }]
-      }
+    const response = await openrouter.chat.completions.create({
+      model: MODEL,
+      messages: [{ role: 'user', content: prompt }]
     });
 
     const briefingText = response.choices[0].message.content.trim();
