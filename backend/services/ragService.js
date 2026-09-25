@@ -1,12 +1,13 @@
 const { queryWithRetry } = require('./db');
-const { OpenRouter } = require('@openrouter/sdk');
+const { OpenAI } = require('openai');
 require('dotenv').config();
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 const MODEL = process.env.OPENROUTER_MODEL || 'inclusionai/ling-3.0-flash-vl:free';
 
-const openrouter = new OpenRouter({
-  apiKey: OPENROUTER_API_KEY
+const openrouter = new OpenAI({
+  apiKey: OPENROUTER_API_KEY,
+  baseURL: "https://openrouter.ai/api/v1"
 });
 
 function validateSchema(data) {
@@ -41,6 +42,7 @@ let pipeline;
 async function getRealEmbedding(text) {
   if (!pipeline) {
     const transformers = await import('@xenova/transformers');
+    transformers.env.cacheDir = '/tmp/.cache';
     pipeline = await transformers.pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
   }
   const output = await pipeline(text, { pooling: 'mean', normalize: true });
