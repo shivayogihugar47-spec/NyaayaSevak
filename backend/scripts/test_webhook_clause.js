@@ -1,4 +1,4 @@
-const axios = require('axios');
+const axios = require("axios");
 
 async function runRealWebhookTest() {
   console.log("=================================================");
@@ -20,8 +20,8 @@ The tenant is solely responsible for all structural repairs, building maintenanc
 `;
 
   console.log("1. Uploading Document to Server (/api/upload)...");
-  const uploadRes = await axios.post('http://localhost:3001/api/upload', {
-    text: sampleDocumentText
+  const uploadRes = await axios.post("http://localhost:3001/api/upload", {
+    text: sampleDocumentText,
   });
 
   const { sessionId, clauses, documentRisks } = uploadRes.data;
@@ -30,11 +30,17 @@ The tenant is solely responsible for all structural repairs, building maintenanc
 
   // Analyze clause 2 on server
   console.log("2. Benchmarking Clause 2 (/api/analyze-clause)...");
-  const clause2Res = await axios.post('http://localhost:3001/api/analyze-clause', {
-    sessionId,
-    clauseId: 'clause_2'
-  });
-  console.log("Server Clause 2 Analysis Risk:", clause2Res.data.analysis.risk_level);
+  const clause2Res = await axios.post(
+    "http://localhost:3001/api/analyze-clause",
+    {
+      sessionId,
+      clauseId: "clause_2",
+    },
+  );
+  console.log(
+    "Server Clause 2 Analysis Risk:",
+    clause2Res.data.analysis.risk_level,
+  );
 
   // 3. Construct realistic Vapi tool call payload with call metadata
   const vapiToolCallPayload = {
@@ -46,25 +52,33 @@ The tenant is solely responsible for all structural repairs, building maintenanc
           type: "function",
           function: {
             name: "getClauseDetail",
-            arguments: JSON.stringify({ clause_id: "2" })
-          }
-        }
+            arguments: JSON.stringify({ clause_id: "2" }),
+          },
+        },
       ],
       call: {
         id: "call_obj_888",
         metadata: {
-          document_id: sessionId
-        }
-      }
-    }
+          document_id: sessionId,
+        },
+      },
+    },
   };
 
-  console.log("\n3. Posting Vapi Payload to Live Server Webhook (/api/voice/webhook)...");
-  console.log("Strict Metadata Passed: message.call.metadata.document_id =", sessionId);
+  console.log(
+    "\n3. Posting Vapi Payload to Live Server Webhook (/api/voice/webhook)...",
+  );
+  console.log(
+    "Strict Metadata Passed: message.call.metadata.document_id =",
+    sessionId,
+  );
   console.log("Tool Function Called: getClauseDetail(clause_id: '2')\n");
 
-  const webhookRes = await axios.post('http://localhost:3001/api/voice/webhook', vapiToolCallPayload);
-  
+  const webhookRes = await axios.post(
+    "http://localhost:3001/api/voice/webhook",
+    vapiToolCallPayload,
+  );
+
   console.log("HTTP 200 WEBHOOK RESPONSE:");
   console.log(JSON.stringify(webhookRes.data, null, 2));
 
@@ -79,20 +93,27 @@ The tenant is solely responsible for all structural repairs, building maintenanc
   console.log(`- Sources:`, JSON.stringify(resultObj.sources, null, 2));
 
   // Strict Assertions
-  const isHighRisk = resultObj.risk_level === 'High';
-  const isSection74 = resultObj.cited_law && resultObj.cited_law.includes('Section 74');
-  const isCorrectDocId = resultObj.found === true && resultObj.clauseId === 'clause_2';
+  const isHighRisk = resultObj.risk_level === "High";
+  const isSection74 =
+    resultObj.cited_law && resultObj.cited_law.includes("Section 74");
+  const isCorrectDocId =
+    resultObj.found === true && resultObj.clauseId === "clause_2";
 
   if (isHighRisk && isSection74 && isCorrectDocId) {
     console.log("\n=================================================");
-    console.log("VERIFICATION SUCCESS: Metadata document_id strictly resolved to exact Clause 2 penalty (High Risk, Section 74)!");
+    console.log(
+      "VERIFICATION SUCCESS: Metadata document_id strictly resolved to exact Clause 2 penalty (High Risk, Section 74)!",
+    );
     console.log("=================================================");
   } else {
-    console.error("\nFAILED: Metadata resolution or clause analysis mismatch!", { isHighRisk, isSection74, isCorrectDocId });
+    console.error(
+      "\nFAILED: Metadata resolution or clause analysis mismatch!",
+      { isHighRisk, isSection74, isCorrectDocId },
+    );
   }
 }
 
-runRealWebhookTest().catch(err => {
+runRealWebhookTest().catch((err) => {
   console.error("Test Error:", err.message);
   if (err.response) console.error("Response Data:", err.response.data);
 });

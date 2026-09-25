@@ -1,30 +1,49 @@
-const { queryWithRetry } = require('./db');
-const { OpenAI } = require('openai');
-require('dotenv').config();
+const { queryWithRetry } = require("./db");
+const { OpenAI } = require("openai");
+const NodeCache = require("node-cache");
+require("dotenv").config();
+
+// 1. Efficiency: Cache LLM responses to reduce latency and cost
+const llmCache = new NodeCache({ stdTTL: 3600 });
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const MODEL = process.env.OPENROUTER_MODEL || 'inclusionai/ling-3.0-flash-vl:free';
+const MODEL =
+  process.env.OPENROUTER_MODEL || "inclusionai/ling-3.0-flash-vl:free";
 
 const openrouter = new OpenAI({
   apiKey: OPENROUTER_API_KEY,
-  baseURL: "https://openrouter.ai/api/v1"
+  baseURL: "https://openrouter.ai/api/v1",
 });
 
 function validateSchema(data) {
-  if (typeof data !== 'object' || data === null) return false;
-  if (typeof data.category !== 'string') return false;
-  if (typeof data.risk_level !== 'string' || !['High', 'Medium', 'Low', 'Safe'].includes(data.risk_level)) return false;
-  if (typeof data.in_simple_terms !== 'string') return false;
-  if (typeof data.legal_issue !== 'string') return false;
-  if (typeof data.recommended_action !== 'string') return false;
-  if (data.cited_law !== null && typeof data.cited_law !== 'string') return false;
-  if (typeof data.confidence_level !== 'string' || !['High', 'Medium', 'Low'].includes(data.confidence_level)) return false;
+  if (typeof data !== "object" || data === null) return false;
+  if (typeof data.category !== "string") return false;
+  if (
+    typeof data.risk_level !== "string" ||
+    !["High", "Medium", "Low", "Safe"].includes(data.risk_level)
+  )
+    return false;
+  if (typeof data.in_simple_terms !== "string") return false;
+  if (typeof data.legal_issue !== "string") return false;
+  if (typeof data.recommended_action !== "string") return false;
+  if (data.cited_law !== null && typeof data.cited_law !== "string")
+    return false;
+  if (
+    typeof data.confidence_level !== "string" ||
+    !["High", "Medium", "Low"].includes(data.confidence_level)
+  )
+    return false;
   return true;
 }
 
 function safeExtractJson(text) {
-  if (!text || typeof text !== 'string') return null;
-  const clean = text.trim().replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/\s*```$/, '').trim();
+  if (!text || typeof text !== "string") return null;
+  const clean = text
+    .trim()
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/, "")
+    .replace(/\s*```$/, "")
+    .trim();
   try {
     return JSON.parse(clean);
   } catch (e) {}
@@ -41,16 +60,24 @@ function safeExtractJson(text) {
 let pipeline;
 async function getRealEmbedding(text) {
   if (!pipeline) {
-    const transformers = await import('@xenova/transformers');
-    transformers.env.cacheDir = '/tmp/.cache';
-    pipeline = await transformers.pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+    const transformers = await import("@xenova/transformers");
+    transformers.env.cacheDir = "/tmp/.cache";
+    pipeline = await transformers.pipeline(
+      "feature-extraction",
+      "Xenova/all-MiniLM-L6-v2",
+    );
   }
-  const output = await pipeline(text, { pooling: 'mean', normalize: true });
-  return `[${Array.from(output.data).join(',')}]`;
+  const output = await pipeline(text, { pooling: "mean", normalize: true });
+  return `[${Array.from(output.data).join(",")}]`;
 }
 
-async function analyzeClauseWithLLM(clauseText, retrievedLaws, attempt = 1, language = 'English') {
-const systemPrompt = `You are a legal assistant. Analyze the contract clause against the provided laws.
+async function analyzeClauseWithLLM(
+  clauseText,
+  retrievedLaws,
+  attempt = 1,
+  language = "English",
+) {
+  const systemPrompt = `You are a legal assistant. Analyze the contract clause against the provided laws.
 Output MUST be ONLY valid JSON matching this schema:
 {
   "category": "Short topic",
@@ -63,17 +90,17 @@ Output MUST be ONLY valid JSON matching this schema:
 }
 
 Provided Laws:
-${retrievedLaws.map(l => `${l.act_name}, Section ${l.section_number}:\n${l.content}`).join('\n\n')}`;
+${retrievedLaws.map((l) => `${l.act_name}, Section ${l.section_number}:\n${l.content}`).join("\n\n")}`;
 
   try {
     const stream = await openrouter.chat.completions.create({
       model: MODEL,
       messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: `Clause to analyze:\n"${clauseText}"` }
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Clause to analyze:\n"${clauseText}"` },
       ],
       stream: true,
-      response_format: { type: "json_object" }
+      response_format: { type: "json_object" },
     });
 
     let rawResponse = "";
@@ -81,30 +108,36 @@ ${retrievedLaws.map(l => `${l.act_name}, Section ${l.section_number}:\n${l.conte
       const content = chunk.choices[0]?.delta?.content;
       if (content) rawResponse += content;
     }
-    
+
     const parsed = safeExtractJson(rawResponse);
-    if (!parsed || !validateSchema(parsed)) throw new Error("Invalid schema or JSON output");
-    
+    if (!parsed || !validateSchema(parsed))
+      throw new Error("Invalid schema or JSON output");
+
     return parsed;
   } catch (error) {
-    if (attempt < 2) return analyzeClauseWithLLM(clauseText, retrievedLaws, attempt + 1);
+    if (attempt < 2)
+      return analyzeClauseWithLLM(clauseText, retrievedLaws, attempt + 1);
     return {
       category: "Unknown",
       risk_level: "Medium",
-      in_simple_terms: "We tried to analyze this clause, but the AI failed to generate a standard response.",
-      legal_issue: "Automated legal grounding failed to verify this clause properly.",
-      recommended_action: "Review this clause manually or try re-running the analysis.",
+      in_simple_terms:
+        "We tried to analyze this clause, but the AI failed to generate a standard response.",
+      legal_issue:
+        "Automated legal grounding failed to verify this clause properly.",
+      recommended_action:
+        "Review this clause manually or try re-running the analysis.",
       cited_law: null,
-      confidence_level: "Low"
+      confidence_level: "Low",
     };
   }
 }
 
-async function processClause(clauseText, language = 'English') {
+async function processClause(clauseText, language = "English") {
   const embeddingStr = await getRealEmbedding(clauseText);
   let retrievedLaws = [];
   try {
-    const res = await queryWithRetry(`
+    const res = await queryWithRetry(
+      `
       WITH RankedChunks AS (
         SELECT act_name, section_number, content, 
                1 - (embedding <=> $1) as similarity,
@@ -117,38 +150,56 @@ async function processClause(clauseText, language = 'English') {
       WHERE rn <= 2
       ORDER BY similarity DESC
       LIMIT 7
-    `, [embeddingStr]);
+    `,
+      [embeddingStr],
+    );
     retrievedLaws = res.rows;
   } catch (err) {
     console.error("Vector search failed:", err.message);
   }
 
   if (retrievedLaws.length === 0) {
-    return { 
-      category: "Uncategorized", 
+    return {
+      category: "Uncategorized",
       risk_level: "Safe",
-      in_simple_terms: language === 'Kannada' ? "ಈ ಷರತ್ತು ಯಾವುದೇ ಪ್ರಮಾಣಿತ ಶಾಸನಬದ್ಧ ನಿಯಮಗಳನ್ನು ಉಲ್ಲಂಘಿಸುವುದಿಲ್ಲ." : language === 'Hindi' ? "यह खंड किसी भी वैधानिक नियम का उल्लंघन नहीं करता है।" : "This clause doesn't seem to trigger any standard statutory regulations we track.",
+      in_simple_terms:
+        language === "Kannada"
+          ? "ಈ ಷರತ್ತು ಯಾವುದೇ ಪ್ರಮಾಣಿತ ಶಾಸನಬದ್ಧ ನಿಯಮಗಳನ್ನು ಉಲ್ಲಂಘಿಸುವುದಿಲ್ಲ."
+          : language === "Hindi"
+            ? "यह खंड किसी भी वैधानिक नियम का उल्लंघन नहीं करता है।"
+            : "This clause doesn't seem to trigger any standard statutory regulations we track.",
       legal_issue: "None",
-      recommended_action: language === 'Kannada' ? "ಯಾವುದೇ ಕ್ರಮ ಅಗತ್ಯವಿಲ್ಲ." : language === 'Hindi' ? "किसी कार्रवाई की आवश्यकता नहीं है।" : "No action needed.",
+      recommended_action:
+        language === "Kannada"
+          ? "ಯಾವುದೇ ಕ್ರಮ ಅಗತ್ಯವಿಲ್ಲ."
+          : language === "Hindi"
+            ? "किसी कार्रवाई की आवश्यकता नहीं है।"
+            : "No action needed.",
       cited_law: null,
-      confidence_level: "High"
+      confidence_level: "High",
     };
   }
-  
-  const result = await analyzeClauseWithLLM(clauseText, retrievedLaws, 1, 'English');
-  if (language !== 'English') {
+
+  const result = await analyzeClauseWithLLM(
+    clauseText,
+    retrievedLaws,
+    1,
+    "English",
+  );
+  if (language !== "English") {
     return await translateLLMResult(result, language, clauseText);
   }
   return result;
 }
 
 async function translateLLMResult(parsedJson, language, clauseText) {
-  const systemContent = language === 'Auto-Detect'
-    ? `You are a translator. First, DETECT the language of this original text: "${clauseText.substring(0, 300)}...". 
+  const systemContent =
+    language === "Auto-Detect"
+      ? `You are a translator. First, DETECT the language of this original text: "${clauseText.substring(0, 300)}...". 
 Then, translate the following 4 text sections entirely into that EXACT same detected language.
 Output the translations in the exact same order, separated by a line with exactly "|||" and nothing else.
 Do NOT output JSON. Do NOT output any conversational filler. Just the translated sections separated by "|||".`
-    : `You are a translator. Translate the following 4 text sections into ${language}.
+      : `You are a translator. Translate the following 4 text sections into ${language}.
 Output the translations in the exact same order, separated by a line with exactly "|||" and nothing else.
 Do NOT output JSON. Do NOT output any conversational filler. Just the translated sections separated by "|||".`;
 
@@ -156,13 +207,13 @@ Do NOT output JSON. Do NOT output any conversational filler. Just the translated
     const stream = await openrouter.chat.completions.create({
       model: MODEL,
       messages: [
-        { role: 'system', content: systemContent },
-        { 
-          role: 'user', 
-          content: `1. ${parsedJson.category}\n\n|||\n\n2. ${parsedJson.in_simple_terms}\n\n|||\n\n3. ${parsedJson.legal_issue}\n\n|||\n\n4. ${parsedJson.recommended_action}`
-        }
+        { role: "system", content: systemContent },
+        {
+          role: "user",
+          content: `1. ${parsedJson.category}\n\n|||\n\n2. ${parsedJson.in_simple_terms}\n\n|||\n\n3. ${parsedJson.legal_issue}\n\n|||\n\n4. ${parsedJson.recommended_action}`,
+        },
       ],
-      stream: true
+      stream: true,
     });
 
     let rawResponse = "";
@@ -170,10 +221,12 @@ Do NOT output JSON. Do NOT output any conversational filler. Just the translated
       const content = chunk.choices[0]?.delta?.content;
       if (content) rawResponse += content;
     }
-    
+
     // Split by the delimiter, cleaning up any numbers or prefixes the LLM might have added
-    const parts = rawResponse.split('|||').map(p => p.replace(/^\d+\.\s*/, '').trim());
-    
+    const parts = rawResponse
+      .split("|||")
+      .map((p) => p.replace(/^\d+\.\s*/, "").trim());
+
     if (parts.length >= 4) {
       return {
         ...parsedJson,
@@ -190,11 +243,16 @@ Do NOT output JSON. Do NOT output any conversational filler. Just the translated
 }
 
 // New: Chat function
-async function generateChatResponse(question, documentClauses = [], language = 'English') {
+async function generateChatResponse(
+  question,
+  documentClauses = [],
+  language = "English",
+) {
   let retrievedLaws = [];
   try {
     const embeddingStr = await getRealEmbedding(question);
-    const res = await queryWithRetry(`
+    const res = await queryWithRetry(
+      `
       WITH RankedChunks AS (
         SELECT act_name, section_number, content, 
                1 - (embedding <=> $1) as similarity,
@@ -207,12 +265,16 @@ async function generateChatResponse(question, documentClauses = [], language = '
       WHERE rn <= 2
       ORDER BY similarity DESC
       LIMIT 7
-    `, [embeddingStr]);
+    `,
+      [embeddingStr],
+    );
     retrievedLaws = res.rows;
   } catch (err) {}
 
-  const fullDocText = (documentClauses || []).map(c => c.text).join('\n');
-  const lawsText = retrievedLaws.map(l => `${l.act_name} Sec ${l.section_number}: ${l.content}`).join('\n\n');
+  const fullDocText = (documentClauses || []).map((c) => c.text).join("\n");
+  const lawsText = retrievedLaws
+    .map((l) => `${l.act_name} Sec ${l.section_number}: ${l.content}`)
+    .join("\n\n");
 
   const prompt = `You are NyayaCheck, a helpful AI legal assistant. Answer the user's question clearly based on the provided document clauses and retrieved statutory laws.
   IMPORTANT: You must respond entirely in ${language}.
@@ -239,40 +301,55 @@ User Question: ${question}`;
   try {
     const response = await openrouter.chat.completions.create({
       model: MODEL,
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: "json_object" }
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" },
     });
 
     let rawResponse = response.choices?.[0]?.message?.content || "";
-    
+
     // Attempt JSON parse using safeExtractJson helper
     const parsed = safeExtractJson(rawResponse);
-    if (parsed && typeof parsed.answer === 'string') {
+    if (parsed && typeof parsed.answer === "string") {
       return {
         answer: parsed.answer,
-        sources: Array.isArray(parsed.sources) ? parsed.sources : []
+        sources: Array.isArray(parsed.sources) ? parsed.sources : [],
       };
     }
 
     // Fallback: If model returned plain text, return it directly as the answer!
-    const cleanText = rawResponse.replace(/```json/gi, '').replace(/```/g, '').trim();
+    const cleanText = rawResponse
+      .replace(/```json/gi, "")
+      .replace(/```/g, "")
+      .trim();
     if (cleanText) {
       return { answer: cleanText, sources: [] };
     }
 
-    return { answer: "Hello! How can I help you analyze your rental agreement or answer legal questions?", sources: [] };
+    return {
+      answer:
+        "Hello! How can I help you analyze your rental agreement or answer legal questions?",
+      sources: [],
+    };
   } catch (err) {
     console.error("Failed to generate chat response:", err);
-    return { answer: "Sorry, I encountered an error answering your message. Please try again.", sources: [] };
+    return {
+      answer:
+        "Sorry, I encountered an error answering your message. Please try again.",
+      sources: [],
+    };
   }
 }
 
 // New: Negotiation Message Generator
-async function generateNegotiationMessage(clauseText, analysis, language = 'English') {
+async function generateNegotiationMessage(
+  clauseText,
+  analysis,
+  language = "English",
+) {
   const prompt = `You are a polite but firm legal assistant helping a tenant draft a negotiation email to their landlord. 
 The landlord proposed this clause: "${clauseText}"
 This clause is problematic because: "${analysis.legal_issue}" 
-Relevant Law: ${analysis.cited_law || 'General fairness'}
+Relevant Law: ${analysis.cited_law || "General fairness"}
 Your goal is to achieve this outcome: "${analysis.recommended_action}"
 
 Draft a short, professional, 1-2 paragraph message that the tenant can copy-paste into an email or WhatsApp to ask the landlord to amend or remove this clause gracefully.
@@ -285,7 +362,7 @@ CRITICAL RULES:
 
   const response = await openrouter.chat.completions.create({
     model: MODEL,
-    messages: [{ role: 'user', content: prompt }]
+    messages: [{ role: "user", content: prompt }],
   });
 
   return response.choices[0]?.message?.content || "";
@@ -318,8 +395,8 @@ Format your response as a valid JSON object matching this schema exactly (no mar
   try {
     const response = await openrouter.chat.completions.create({
       model: MODEL,
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: "json_object" }
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" },
     });
 
     let rawResponse = response.choices?.[0]?.message?.content || "";
@@ -359,8 +436,8 @@ If no document-level risks are found, return an empty array for "document_risks"
   try {
     const response = await openrouter.chat.completions.create({
       model: MODEL,
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: "json_object" }
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" },
     });
 
     let rawResponse = response.choices?.[0]?.message?.content || "";
@@ -377,23 +454,37 @@ If no document-level risks are found, return an empty array for "document_risks"
 
 // New: Lawyer Questions Generator for Summary Checklist
 async function generateLawyerQuestions(documentRisks, clauseAnalyses) {
-  const highRisk = clauseAnalyses.filter(c => c.analysis.risk_level === 'High');
-  const lowConfidence = clauseAnalyses.filter(c => c.analysis.confidence_level === 'Low');
-  const mediumRisk = clauseAnalyses.filter(c => c.analysis.risk_level === 'Medium');
+  const highRisk = clauseAnalyses.filter(
+    (c) => c.analysis.risk_level === "High",
+  );
+  const lowConfidence = clauseAnalyses.filter(
+    (c) => c.analysis.confidence_level === "Low",
+  );
+  const mediumRisk = clauseAnalyses.filter(
+    (c) => c.analysis.risk_level === "Medium",
+  );
 
   const verifiedCitations = new Set();
-  clauseAnalyses.forEach(c => {
-    if (c.analysis.cited_law && c.analysis.cited_law !== 'None' && c.analysis.cited_law !== 'Safe') {
+  clauseAnalyses.forEach((c) => {
+    if (
+      c.analysis.cited_law &&
+      c.analysis.cited_law !== "None" &&
+      c.analysis.cited_law !== "Safe"
+    ) {
       verifiedCitations.add(c.analysis.cited_law);
     }
   });
-  documentRisks.forEach(r => {
-    if (r.description.includes('Registration Act') || r.title.includes('Registration')) {
-      verifiedCitations.add('Registration Act, 1908, Section 17');
+  documentRisks.forEach((r) => {
+    if (
+      r.description.includes("Registration Act") ||
+      r.title.includes("Registration")
+    ) {
+      verifiedCitations.add("Registration Act, 1908, Section 17");
     }
   });
 
-  const verifiedCitationsList = Array.from(verifiedCitations).join('; ') || 'None specifically cited';
+  const verifiedCitationsList =
+    Array.from(verifiedCitations).join("; ") || "None specifically cited";
 
   const prompt = `You are a legal advisor helping a non-lawyer client prepare simple, direct questions to ask their advocate during a legal consultation.
 
@@ -404,10 +495,30 @@ Document-Level Risks Found:
 ${JSON.stringify(documentRisks, null, 2)}
 
 High-Severity Flagged Clauses:
-${JSON.stringify(highRisk.map(c => ({ clause_id: c.id, text: c.text, category: c.analysis.category, issue: c.analysis.legal_issue, cited_law: c.analysis.cited_law })), null, 2)}
+${JSON.stringify(
+  highRisk.map((c) => ({
+    clause_id: c.id,
+    text: c.text,
+    category: c.analysis.category,
+    issue: c.analysis.legal_issue,
+    cited_law: c.analysis.cited_law,
+  })),
+  null,
+  2,
+)}
 
 Medium-Severity & Low-Confidence Items:
-${JSON.stringify([...mediumRisk, ...lowConfidence].map(c => ({ clause_id: c.id, text: c.text, category: c.analysis.category, issue: c.analysis.legal_issue, confidence: c.analysis.confidence_level })), null, 2)}
+${JSON.stringify(
+  [...mediumRisk, ...lowConfidence].map((c) => ({
+    clause_id: c.id,
+    text: c.text,
+    category: c.analysis.category,
+    issue: c.analysis.legal_issue,
+    confidence: c.analysis.confidence_level,
+  })),
+  null,
+  2,
+)}
 
 Generate 3 to 4 short, clear questions for the client to ask their advocate during a consultation.
 
@@ -429,8 +540,8 @@ CRITICAL RULES:
   try {
     const response = await openrouter.chat.completions.create({
       model: MODEL,
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: "json_object" }
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" },
     });
 
     let rawResponse = response.choices?.[0]?.message?.content || "";
@@ -441,54 +552,72 @@ CRITICAL RULES:
     return [
       {
         topic: "Clause Enforceability",
-        question: "Are the penalty and immediate eviction clauses legally enforceable in court?",
-        context: "Multiple high-risk clauses were identified in the agreement."
-      }
+        question:
+          "Are the penalty and immediate eviction clauses legally enforceable in court?",
+        context: "Multiple high-risk clauses were identified in the agreement.",
+      },
     ];
   } catch (err) {
     console.error("Failed to generate lawyer questions", err);
     return [
       {
         topic: "Clause Enforceability",
-        question: "Are the penalty and immediate eviction clauses legally enforceable in court?",
-        context: "Multiple high-risk clauses were identified in the agreement."
-      }
+        question:
+          "Are the penalty and immediate eviction clauses legally enforceable in court?",
+        context: "Multiple high-risk clauses were identified in the agreement.",
+      },
     ];
   }
 }
 
 async function generateSummaryChecklist(documentRisks, clauseAnalyses) {
-  const lawyerQuestions = await generateLawyerQuestions(documentRisks, clauseAnalyses);
+  const lawyerQuestions = await generateLawyerQuestions(
+    documentRisks,
+    clauseAnalyses,
+  );
 
   // Non-obvious legal insights collection
   const nonObviousInsights = [];
-  
-  const registrationRisk = documentRisks.find(r => r.title.includes('11-Month') || r.description.includes('Registration Act'));
+
+  const registrationRisk = documentRisks.find(
+    (r) =>
+      r.title.includes("11-Month") ||
+      r.description.includes("Registration Act"),
+  );
   if (registrationRisk) {
     nonObviousInsights.push({
-      title: "11-Month Lease Registration Risk (Section 17, Registration Act 1908)",
-      insight: "While 11-month agreements avoid mandatory registration fees, an unregistered document may be inadmissible as primary evidence in court for enforcing lease terms or recovering deposits under Section 49 of the Registration Act."
+      title:
+        "11-Month Lease Registration Risk (Section 17, Registration Act 1908)",
+      insight:
+        "While 11-month agreements avoid mandatory registration fees, an unregistered document may be inadmissible as primary evidence in court for enforcing lease terms or recovering deposits under Section 49 of the Registration Act.",
     });
   }
 
   // General non-obvious insight on NI Act Section 138 (cheque bouncing / statutory notice)
   nonObviousInsights.push({
-    title: "Statutory Notice Timelines for Bounced Rent Payments (NI Act Section 138)",
-    insight: "If security deposit or rent cheques bounce, Section 138 of the Negotiable Instruments Act mandates serving a legal demand notice within 30 days of receiving bank dishonour memo, with 15 days provided for payment before filing a complaint."
+    title:
+      "Statutory Notice Timelines for Bounced Rent Payments (NI Act Section 138)",
+    insight:
+      "If security deposit or rent cheques bounce, Section 138 of the Negotiable Instruments Act mandates serving a legal demand notice within 30 days of receiving bank dishonour memo, with 15 days provided for payment before filing a complaint.",
   });
 
   return {
-    disclaimer: "DISCLAIMER: NyayaCheck provides automated legal analysis based on statutory databases for informational purposes only. It does not constitute formal legal advice. Laws vary by state and local jurisdiction. Always consult a qualified advocate before signing or taking legal action.",
+    disclaimer:
+      "DISCLAIMER: NyayaCheck provides automated legal analysis based on statutory databases for informational purposes only. It does not constitute formal legal advice. Laws vary by state and local jurisdiction. Always consult a qualified advocate before signing or taking legal action.",
     generated_at: new Date().toISOString(),
     summary_stats: {
       total_clauses_analyzed: clauseAnalyses.length,
-      high_risk_count: clauseAnalyses.filter(c => c.analysis.risk_level === 'High').length,
-      medium_risk_count: clauseAnalyses.filter(c => c.analysis.risk_level === 'Medium').length,
-      document_risks_count: documentRisks.length
+      high_risk_count: clauseAnalyses.filter(
+        (c) => c.analysis.risk_level === "High",
+      ).length,
+      medium_risk_count: clauseAnalyses.filter(
+        (c) => c.analysis.risk_level === "Medium",
+      ).length,
+      document_risks_count: documentRisks.length,
     },
     document_level_risks: documentRisks,
     non_obvious_insights: nonObviousInsights,
-    flagged_clauses: clauseAnalyses.map(c => ({
+    flagged_clauses: clauseAnalyses.map((c) => ({
       clause_id: c.id,
       text: c.text,
       category: c.analysis.category,
@@ -497,9 +626,9 @@ async function generateSummaryChecklist(documentRisks, clauseAnalyses) {
       legal_issue: c.analysis.legal_issue,
       cited_law: c.analysis.cited_law,
       confidence_level: c.analysis.confidence_level,
-      recommended_action: c.analysis.recommended_action
+      recommended_action: c.analysis.recommended_action,
     })),
-    questions_for_lawyer: lawyerQuestions
+    questions_for_lawyer: lawyerQuestions,
   };
 }
 
@@ -508,19 +637,26 @@ async function generateSummaryChecklist(documentRisks, clauseAnalyses) {
  * Uses documentRisks + top 2 highest-severity flagged clauses
  */
 async function generateVoiceBriefing(documentRisks = [], clauseAnalyses = []) {
-  const highRisk = clauseAnalyses.filter(c => c.analysis && c.analysis.risk_level === 'High');
-  const mediumRisk = clauseAnalyses.filter(c => c.analysis && c.analysis.risk_level === 'Medium');
+  const highRisk = clauseAnalyses.filter(
+    (c) => c.analysis && c.analysis.risk_level === "High",
+  );
+  const mediumRisk = clauseAnalyses.filter(
+    (c) => c.analysis && c.analysis.risk_level === "Medium",
+  );
   const topClauses = [...highRisk, ...mediumRisk].slice(0, 2);
 
   const topRisksSummary = {
-    documentRisks: documentRisks.map(r => ({ title: r.title, description: r.description })),
-    flaggedClauses: topClauses.map(c => ({
+    documentRisks: documentRisks.map((r) => ({
+      title: r.title,
+      description: r.description,
+    })),
+    flaggedClauses: topClauses.map((c) => ({
       clauseId: c.id,
       category: c.analysis.category,
       issue: c.analysis.legal_issue,
       cited_law: c.analysis.cited_law,
-      risk_level: c.analysis.risk_level
-    }))
+      risk_level: c.analysis.risk_level,
+    })),
   };
 
   const prompt = `You are NyayaCheck Voice Assistant speaking directly to a user over a phone/voice call.
@@ -538,33 +674,41 @@ Rules:
   try {
     const response = await openrouter.chat.completions.create({
       model: MODEL,
-      messages: [{ role: 'user', content: prompt }]
+      messages: [{ role: "user", content: prompt }],
     });
 
     const briefingText = response.choices[0].message.content.trim();
-    
+
     // Collect sources present in top briefing
     const sources = [];
-    topClauses.forEach(c => {
-      if (c.analysis && c.analysis.cited_law && c.analysis.cited_law !== 'None') {
-        sources.push({ type: 'law', reference: c.analysis.cited_law });
+    topClauses.forEach((c) => {
+      if (
+        c.analysis &&
+        c.analysis.cited_law &&
+        c.analysis.cited_law !== "None"
+      ) {
+        sources.push({ type: "law", reference: c.analysis.cited_law });
       }
-      sources.push({ type: 'clause', reference: `Clause ${c.id}: ${c.analysis.category}` });
+      sources.push({
+        type: "clause",
+        reference: `Clause ${c.id}: ${c.analysis.category}`,
+      });
     });
-    if (documentRisks.some(r => r.title.includes('Registration'))) {
-      sources.push({ type: 'law', reference: 'Registration Act 1908, Sec 17' });
+    if (documentRisks.some((r) => r.title.includes("Registration"))) {
+      sources.push({ type: "law", reference: "Registration Act 1908, Sec 17" });
     }
 
     return {
       briefing: briefingText,
       topRisksSummary,
-      sources
+      sources,
     };
   } catch (err) {
     console.error("Voice briefing generation error:", err);
     return {
-      briefing: "Hello! I've reviewed your agreement. I found a few key areas that require your attention, including security deposit terms and lease duration risks. What specific clause would you like me to explain?",
-      sources: []
+      briefing:
+        "Hello! I've reviewed your agreement. I found a few key areas that require your attention, including security deposit terms and lease duration risks. What specific clause would you like me to explain?",
+      sources: [],
     };
   }
 }
@@ -577,28 +721,42 @@ async function getClauseDetail(session, clauseIdQuery) {
     return { error: "Session or clauses not found." };
   }
 
-  const queryStr = String(clauseIdQuery || '').toLowerCase().trim();
-  if (!queryStr || queryStr === 'all' || queryStr === 'overview' || queryStr === 'undefined') {
-    const clauseSummaries = session.clauses.map(c => {
-      const flag = session.flags ? session.flags[c.id] : null;
-      return `Clause ${c.id}: ${c.text.substring(0, 150)}${flag ? ` (Risk: ${flag.risk_level}, Category: ${flag.category})` : ''}`;
-    }).join('\n');
+  const queryStr = String(clauseIdQuery || "")
+    .toLowerCase()
+    .trim();
+  if (
+    !queryStr ||
+    queryStr === "all" ||
+    queryStr === "overview" ||
+    queryStr === "undefined"
+  ) {
+    const clauseSummaries = session.clauses
+      .map((c) => {
+        const flag = session.flags ? session.flags[c.id] : null;
+        return `Clause ${c.id}: ${c.text.substring(0, 150)}${flag ? ` (Risk: ${flag.risk_level}, Category: ${flag.category})` : ""}`;
+      })
+      .join("\n");
 
     return {
       found: true,
       overview: true,
       totalClauses: session.clauses.length,
       documentRisks: session.documentRisks || [],
-      clausesSummary: clauseSummaries
+      clausesSummary: clauseSummaries,
     };
   }
 
   // Handle various clause ID formats (e.g. "clause_1", "1", "Clause 2", 2)
-  const normalizedQuery = queryStr.replace(/[^0-9]/g, '');
-  
-  let targetClause = session.clauses.find(c => {
-    const normId = String(c.id).toLowerCase().replace(/[^0-9]/g, '');
-    return normId === normalizedQuery || String(c.id).toLowerCase() === String(clauseIdQuery).toLowerCase();
+  const normalizedQuery = queryStr.replace(/[^0-9]/g, "");
+
+  let targetClause = session.clauses.find((c) => {
+    const normId = String(c.id)
+      .toLowerCase()
+      .replace(/[^0-9]/g, "");
+    return (
+      normId === normalizedQuery ||
+      String(c.id).toLowerCase() === String(clauseIdQuery).toLowerCase()
+    );
   });
 
   if (!targetClause && session.clauses.length > 0) {
@@ -610,9 +768,9 @@ async function getClauseDetail(session, clauseIdQuery) {
   }
 
   if (!targetClause) {
-    return { 
-      found: false, 
-      message: `Clause '${clauseIdQuery}' was not found in this document. Total clauses available: ${session.clauses.length}.`
+    return {
+      found: false,
+      message: `Clause '${clauseIdQuery}' was not found in this document. Total clauses available: ${session.clauses.length}.`,
     };
   }
 
@@ -623,10 +781,17 @@ async function getClauseDetail(session, clauseIdQuery) {
   }
 
   const sourceList = [
-    { type: 'clause', reference: `Clause ${targetClause.id}: ${analysis.category}` }
+    {
+      type: "clause",
+      reference: `Clause ${targetClause.id}: ${analysis.category}`,
+    },
   ];
-  if (analysis.cited_law && analysis.cited_law !== 'None' && analysis.cited_law !== 'Safe') {
-    sourceList.push({ type: 'law', reference: analysis.cited_law });
+  if (
+    analysis.cited_law &&
+    analysis.cited_law !== "None" &&
+    analysis.cited_law !== "Safe"
+  ) {
+    sourceList.push({ type: "law", reference: analysis.cited_law });
   }
 
   return {
@@ -639,7 +804,7 @@ async function getClauseDetail(session, clauseIdQuery) {
     legal_issue: analysis.legal_issue,
     cited_law: analysis.cited_law,
     recommended_action: analysis.recommended_action,
-    sources: sourceList
+    sources: sourceList,
   };
 }
 
@@ -647,15 +812,19 @@ async function getClauseDetail(session, clauseIdQuery) {
  * Tool: get_document_risks
  * Expected by Vapi webhook
  */
-async function getDocumentRisks(session, agreementType = 'unknown', maxRisks = 5) {
+async function getDocumentRisks(
+  session,
+  agreementType = "unknown",
+  maxRisks = 5,
+) {
   if (!session) return { error: "Session not found." };
-  
+
   const findings = [];
   const sources = [];
-  
+
   // Combine document-level risks and clause-level risks
   const docRisks = session.documentRisks || [];
-  docRisks.forEach(r => {
+  docRisks.forEach((r) => {
     findings.push({
       grounded: true,
       severity: r.risk_level,
@@ -665,16 +834,23 @@ async function getDocumentRisks(session, agreementType = 'unknown', maxRisks = 5
       source_reference: "Document Overview",
       explanation: r.description,
       consequence: "May limit your legal rights or financial security.",
-      legal_citations: r.title.includes('11-Month') ? ["Registration Act 1908, Sec 17"] : [],
-      uncertainty_warning: "This is a general document risk based on common patterns."
+      legal_citations: r.title.includes("11-Month")
+        ? ["Registration Act 1908, Sec 17"]
+        : [],
+      uncertainty_warning:
+        "This is a general document risk based on common patterns.",
     });
-    if (r.title.includes('11-Month')) sources.push({ type: 'law', reference: 'Registration Act 1908, Sec 17' });
+    if (r.title.includes("11-Month"))
+      sources.push({ type: "law", reference: "Registration Act 1908, Sec 17" });
   });
 
   if (session.clauses && session.flags) {
     for (const clause of session.clauses) {
       const flag = session.flags[clause.id];
-      if (flag && (flag.risk_level === 'High' || flag.risk_level === 'Medium')) {
+      if (
+        flag &&
+        (flag.risk_level === "High" || flag.risk_level === "Medium")
+      ) {
         findings.push({
           grounded: true,
           severity: flag.risk_level,
@@ -684,18 +860,20 @@ async function getDocumentRisks(session, agreementType = 'unknown', maxRisks = 5
           source_reference: `Clause ${clause.id}`,
           explanation: flag.in_simple_terms,
           consequence: flag.legal_issue,
-          legal_citations: flag.cited_law && flag.cited_law !== 'None' ? [flag.cited_law] : [],
-          uncertainty_warning: "Based on automated analysis. Consult an advocate for definitive advice."
+          legal_citations:
+            flag.cited_law && flag.cited_law !== "None" ? [flag.cited_law] : [],
+          uncertainty_warning:
+            "Based on automated analysis. Consult an advocate for definitive advice.",
         });
-        sources.push({ type: 'clause', reference: clause.id });
+        sources.push({ type: "clause", reference: clause.id });
       }
     }
   }
 
   // Sort by severity (High first, then Medium)
   findings.sort((a, b) => {
-    if (a.severity === 'High' && b.severity !== 'High') return -1;
-    if (b.severity === 'High' && a.severity !== 'High') return 1;
+    if (a.severity === "High" && b.severity !== "High") return -1;
+    if (b.severity === "High" && a.severity !== "High") return 1;
     return 0;
   });
 
@@ -705,13 +883,13 @@ async function getDocumentRisks(session, agreementType = 'unknown', maxRisks = 5
     return {
       error: "No significant risks found.",
       findings: [],
-      sources: []
+      sources: [],
     };
   }
 
   return {
     findings: limitedFindings,
-    sources
+    sources,
   };
 }
 
@@ -719,12 +897,20 @@ async function getDocumentRisks(session, agreementType = 'unknown', maxRisks = 5
  * Tool: get_clause_with_citations
  * Expected by Vapi webhook
  */
-async function getClauseWithCitations(session, question, jurisdiction = "India", clauseReference = null) {
+async function getClauseWithCitations(
+  session,
+  question,
+  jurisdiction = "India",
+  clauseReference = null,
+) {
   if (!session) return { error: "Session not found." };
-  if (!question || typeof question !== 'string') return { error: "Question is required." };
+  if (!question || typeof question !== "string")
+    return { error: "Question is required." };
 
-  const rawDocumentText = session.clauses.map(c => `Clause ${c.id}: ${c.text}`).join('\n\n');
-  
+  const rawDocumentText = session.clauses
+    .map((c) => `Clause ${c.id}: ${c.text}`)
+    .join("\n\n");
+
   // Prompt injection defense: Treat document text as pure data
   const prompt = `You are a strict, objective legal analysis AI. 
 You must answer the user's question ONLY using the provided <Document_Text>. 
@@ -761,25 +947,47 @@ Format your output EXACTLY as this JSON schema:
   "suggested_next_step": "If grounded is false, safe next step."
 }`;
 
+  const cacheKey = `clause_cit_${Buffer.from(question).toString("base64").substring(0, 50)}_${session.userId}`;
+  const cachedResponse = llmCache.get(cacheKey);
+  if (cachedResponse) {
+    console.log("Serving getClauseWithCitations from cache.");
+    return cachedResponse;
+  }
+
   try {
     const response = await openrouter.chat.completions.create({
       model: MODEL,
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: "json_object" }
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" },
     });
 
     let rawResponse = response.choices?.[0]?.message?.content || "";
     const parsed = safeExtractJson(rawResponse);
     if (parsed) {
-      if (parsed.exact_relevant_clause_excerpts && parsed.exact_relevant_clause_excerpts.length > 0) {
-        parsed.sources = parsed.clause_headings.map(h => ({ type: 'clause', reference: h }));
+      if (
+        parsed.exact_relevant_clause_excerpts &&
+        parsed.exact_relevant_clause_excerpts.length > 0
+      ) {
+        parsed.sources = parsed.clause_headings.map((h) => ({
+          type: "clause",
+          reference: h,
+        }));
       }
+      llmCache.set(cacheKey, parsed);
       return parsed;
     }
-    return { grounded: false, reason_if_not_grounded: "Failed to parse analysis.", suggested_next_step: "Please rephrase." };
+    return {
+      grounded: false,
+      reason_if_not_grounded: "Failed to parse analysis.",
+      suggested_next_step: "Please rephrase.",
+    };
   } catch (err) {
     console.error("Failed to execute get_clause_with_citations", err);
-    return { grounded: false, reason_if_not_grounded: "AI Service Error.", suggested_next_step: "Try again later." };
+    return {
+      grounded: false,
+      reason_if_not_grounded: "AI Service Error.",
+      suggested_next_step: "Try again later.",
+    };
   }
 }
 
@@ -787,8 +995,8 @@ Format your output EXACTLY as this JSON schema:
  * Tool: getLawCitation(actQuery, sectionQuery)
  */
 async function getLawCitation(actQuery, sectionQuery) {
-  let act = (actQuery || '').trim();
-  let section = (sectionQuery || '').trim();
+  let act = (actQuery || "").trim();
+  let section = (sectionQuery || "").trim();
 
   // Extract section number if embedded in actQuery (e.g. "Section 74")
   if (!section && act.match(/section\s*(\d+)/i)) {
@@ -796,19 +1004,22 @@ async function getLawCitation(actQuery, sectionQuery) {
     section = m[1];
   }
 
-  const rawSectionDigits = section.replace(/[^0-9]/g, '');
+  const rawSectionDigits = section.replace(/[^0-9]/g, "");
   let retrievedLaws = [];
 
   // 1. Attempt exact/structured section number lookup first
   if (rawSectionDigits) {
     try {
-      const res = await queryWithRetry(`
+      const res = await queryWithRetry(
+        `
         SELECT act_name, section_number, content
         FROM law_chunks
         WHERE (section_number ILIKE $1 OR content ILIKE $2)
         ORDER BY id ASC
         LIMIT 3
-      `, [`%${rawSectionDigits}%`, `%Section ${rawSectionDigits}:%`]);
+      `,
+        [`%${rawSectionDigits}%`, `%Section ${rawSectionDigits}:%`],
+      );
       retrievedLaws = res.rows;
     } catch (err) {
       console.error("Direct section lookup error:", err.message);
@@ -823,37 +1034,39 @@ async function getLawCitation(actQuery, sectionQuery) {
     }
     const embeddingStr = await getRealEmbedding(searchTerm);
     try {
-      const res = await queryWithRetry(`
+      const res = await queryWithRetry(
+        `
         SELECT act_name, section_number, content, 
                1 - (embedding <=> $1) as similarity
         FROM law_chunks
         WHERE 1 - (embedding <=> $1) >= 0.25
         ORDER BY similarity DESC
         LIMIT 3
-      `, [embeddingStr]);
+      `,
+        [embeddingStr],
+      );
       retrievedLaws = res.rows;
     } catch (err) {
       console.error("getLawCitation DB search error:", err.message);
     }
   }
 
-  const sources = retrievedLaws.map(l => ({
-    type: 'law',
-    reference: `${l.act_name}, Section ${l.section_number}`
+  const sources = retrievedLaws.map((l) => ({
+    type: "law",
+    reference: `${l.act_name}, Section ${l.section_number}`,
   }));
 
   return {
     query: `${act} ${section}`.trim(),
     foundCount: retrievedLaws.length,
-    citations: retrievedLaws.map(l => ({
+    citations: retrievedLaws.map((l) => ({
       act: l.act_name,
       section: l.section_number,
-      content: l.content
+      content: l.content,
     })),
-    sources
+    sources,
   };
 }
-
 
 module.exports = {
   processClause,
@@ -867,6 +1080,5 @@ module.exports = {
   getClauseDetail,
   getDocumentRisks,
   getClauseWithCitations,
-  getLawCitation
+  getLawCitation,
 };
-

@@ -1,30 +1,57 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { ShieldAlert, ChevronRight, FileText, ArrowLeftRight, UploadCloud, ShieldCheck, Scale, FileSignature, Layers, User, MessageSquare } from 'lucide-react';
+import React from "react";
+import { motion } from "framer-motion";
+import {
+  ShieldAlert,
+  ChevronRight,
+  FileText,
+  ArrowLeftRight,
+  UploadCloud,
+  ShieldCheck,
+  Scale,
+  FileSignature,
+  Layers,
+  User,
+  MessageSquare,
+} from "lucide-react";
 
 export default function LandingPage({ setView, setAppMode }) {
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100 font-sans selection:bg-indigo-500/30 overflow-x-hidden">
-      
       {/* Global Navbar */}
       <header className="border-b border-white/5 bg-neutral-950/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer">
             <ShieldAlert className="w-6 h-6 text-indigo-500" />
-            <h1 className="text-xl font-bold tracking-tight">Nyaya<span className="text-indigo-500">Check</span></h1>
+            <h1 className="text-xl font-bold tracking-tight">
+              Nyaya<span className="text-indigo-500">Check</span>
+            </h1>
           </div>
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-neutral-400">
-            <a href="#features" className="hover:text-white transition-colors">Features</a>
-            <a href="#how-it-works" className="hover:text-white transition-colors">How it Works</a>
-            <a href="#security" className="hover:text-white transition-colors">Security</a>
-            <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
+            <a href="#features" className="hover:text-white transition-colors">
+              Features
+            </a>
+            <a
+              href="#how-it-works"
+              className="hover:text-white transition-colors"
+            >
+              How it Works
+            </a>
+            <a href="#security" className="hover:text-white transition-colors">
+              Security
+            </a>
+            <a href="#pricing" className="hover:text-white transition-colors">
+              Pricing
+            </a>
           </nav>
           <div className="flex items-center gap-4">
             <button className="text-sm font-medium text-neutral-400 hover:text-white transition-colors hidden sm:block">
               Sign In
             </button>
-            <button 
-              onClick={() => {setView('app'); setAppMode('analyze');}}
+            <button
+              onClick={() => {
+                setView("app");
+                setAppMode("analyze");
+              }}
               className="bg-white text-black px-4 py-2 rounded-full text-sm font-bold hover:bg-neutral-200 transition-colors shadow-[0_0_20px_rgba(255,255,255,0.1)]"
             >
               Start Free Trial
@@ -40,41 +67,47 @@ export default function LandingPage({ setView, setAppMode }) {
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[400px] h-[300px] bg-purple-600/20 rounded-full blur-[100px] pointer-events-none"></div>
 
         <div className="max-w-7xl mx-auto px-6 relative z-10 flex flex-col items-center text-center">
-
-
-          <motion.h1 
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
             className="text-6xl md:text-8xl font-bold tracking-tighter mb-8 bg-gradient-to-br from-white via-white to-neutral-500 bg-clip-text text-transparent max-w-5xl leading-[1.1]"
           >
-            Contract intelligence, <br className="hidden md:block"/> solved.
+            Contract intelligence, <br className="hidden md:block" /> solved.
           </motion.h1>
 
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
             className="text-xl text-neutral-400 max-w-2xl mb-12 leading-relaxed"
           >
-            Upload any legal agreement. Our statutory grounding engine benchmarks it against Indian law to instantly flag risks, missing clauses, and predatory terms.
+            Upload any legal agreement. Our statutory grounding engine
+            benchmarks it against Indian law to instantly flag risks, missing
+            clauses, and predatory terms.
           </motion.p>
 
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
             className="flex flex-col sm:flex-row gap-4 mb-20"
           >
-            <button 
-              onClick={() => {setView('app'); setAppMode('analyze');}}
+            <button
+              onClick={() => {
+                setView("app");
+                setAppMode("analyze");
+              }}
               className="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-4 rounded-full font-semibold transition-all flex items-center justify-center gap-2 text-lg shadow-[0_0_30px_rgba(79,70,229,0.3)] hover:shadow-[0_0_40px_rgba(79,70,229,0.5)]"
             >
               Analyze a Document
               <ChevronRight className="w-5 h-5" />
             </button>
-            <button 
-              onClick={() => {setView('app'); setAppMode('compare');}}
+            <button
+              onClick={() => {
+                setView("app");
+                setAppMode("compare");
+              }}
               className="bg-white/5 hover:bg-white/10 text-white px-8 py-4 rounded-full font-semibold transition-all flex items-center justify-center gap-2 text-lg border border-white/10"
             >
               <ArrowLeftRight className="w-5 h-5" />
@@ -83,7 +116,7 @@ export default function LandingPage({ setView, setAppMode }) {
           </motion.div>
 
           {/* High-Fidelity Product Mockup */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.4 }}
@@ -95,23 +128,26 @@ export default function LandingPage({ setView, setAppMode }) {
               <div className="w-3 h-3 rounded-full bg-yellow-500/80"></div>
               <div className="w-3 h-3 rounded-full bg-green-500/80"></div>
             </div>
-            <img 
-              src="/nyayacheck-hero.png" 
-              alt="NyayaCheck Dashboard" 
+            <img
+              src="/nyayacheck-hero.png"
+              alt="NyayaCheck Dashboard"
               className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity"
             />
           </motion.div>
         </div>
       </section>
 
-
-
       {/* Bento Box Grid */}
       <section id="features" className="py-32">
         <div className="max-w-7xl mx-auto px-6">
           <div className="mb-20">
-            <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">Built for precision.</h2>
-            <p className="text-xl text-neutral-400 max-w-2xl">A powerful suite of tools designed to extract, analyze, and protect your legal interests with zero friction.</p>
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">
+              Built for precision.
+            </h2>
+            <p className="text-xl text-neutral-400 max-w-2xl">
+              A powerful suite of tools designed to extract, analyze, and
+              protect your legal interests with zero friction.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -121,8 +157,14 @@ export default function LandingPage({ setView, setAppMode }) {
                 <div className="w-12 h-12 bg-indigo-500/20 rounded-2xl flex items-center justify-center mb-6 border border-indigo-500/30">
                   <Scale className="w-6 h-6 text-indigo-400" />
                 </div>
-                <h3 className="text-2xl font-bold mb-3">Statutory Grounding Engine</h3>
-                <p className="text-neutral-400 max-w-md">We don't rely on generic AI guesses. Every clause is strictly benchmarked against actual, localized statutory laws (e.g. The Indian Contract Act, 1872).</p>
+                <h3 className="text-2xl font-bold mb-3">
+                  Statutory Grounding Engine
+                </h3>
+                <p className="text-neutral-400 max-w-md">
+                  We don't rely on generic AI guesses. Every clause is strictly
+                  benchmarked against actual, localized statutory laws (e.g. The
+                  Indian Contract Act, 1872).
+                </p>
               </div>
               {/* Decorative Code Snippet Background */}
               <div className="absolute right-[-50px] bottom-[-50px] opacity-20 group-hover:opacity-40 transition-opacity font-mono text-sm text-indigo-300 leading-relaxed pointer-events-none">
@@ -143,7 +185,10 @@ return analysis.risk_level // HIGH`}
                   <UploadCloud className="w-6 h-6 text-green-400" />
                 </div>
                 <h3 className="text-2xl font-bold mb-3">Instant OCR</h3>
-                <p className="text-neutral-400">Scanned PDFs? Potato-quality phone pictures? Drop them in. We extract the text perfectly.</p>
+                <p className="text-neutral-400">
+                  Scanned PDFs? Potato-quality phone pictures? Drop them in. We
+                  extract the text perfectly.
+                </p>
               </div>
             </div>
 
@@ -154,7 +199,10 @@ return analysis.risk_level // HIGH`}
                   <MessageSquare className="w-6 h-6 text-purple-400" />
                 </div>
                 <h3 className="text-2xl font-bold mb-3">Pushback Copilot</h3>
-                <p className="text-neutral-400">Instantly generate professional negotiation emails citing the exact laws the landlord violated.</p>
+                <p className="text-neutral-400">
+                  Instantly generate professional negotiation emails citing the
+                  exact laws the landlord violated.
+                </p>
               </div>
             </div>
 
@@ -165,15 +213,23 @@ return analysis.risk_level // HIGH`}
                   <ArrowLeftRight className="w-6 h-6 text-orange-400" />
                 </div>
                 <h3 className="text-2xl font-bold mb-3">Version Compare</h3>
-                <p className="text-neutral-400">Upload Draft V1 and Draft V2. We'll highlight exactly what they sneaked into the new version while you weren't looking.</p>
+                <p className="text-neutral-400">
+                  Upload Draft V1 and Draft V2. We'll highlight exactly what
+                  they sneaked into the new version while you weren't looking.
+                </p>
               </div>
               <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/4 w-1/2">
                 <div className="bg-black border border-white/10 rounded-xl p-4 shadow-2xl rotate-[-5deg]">
-                   <div className="text-red-400 line-through text-sm mb-2">- Landlord covers major repairs.</div>
-                   <div className="text-green-400 text-sm">+ Tenant is responsible for all structural repairs.</div>
-                   <div className="mt-3 flex items-center gap-2 text-xs text-orange-400 bg-orange-500/10 p-2 rounded border border-orange-500/20">
-                     <ShieldAlert className="w-3 h-3" /> Critical Liability Shift Detected
-                   </div>
+                  <div className="text-red-400 line-through text-sm mb-2">
+                    - Landlord covers major repairs.
+                  </div>
+                  <div className="text-green-400 text-sm">
+                    + Tenant is responsible for all structural repairs.
+                  </div>
+                  <div className="mt-3 flex items-center gap-2 text-xs text-orange-400 bg-orange-500/10 p-2 rounded border border-orange-500/20">
+                    <ShieldAlert className="w-3 h-3" /> Critical Liability Shift
+                    Detected
+                  </div>
                 </div>
               </div>
             </div>
@@ -182,14 +238,22 @@ return analysis.risk_level // HIGH`}
       </section>
 
       {/* Alternating Deep Dives */}
-      <section id="how-it-works" className="py-24 bg-black border-t border-white/5">
+      <section
+        id="how-it-works"
+        className="py-24 bg-black border-t border-white/5"
+      >
         <div className="max-w-7xl mx-auto px-6">
           {/* Deep Dive 1 */}
           <div className="flex flex-col md:flex-row items-center gap-16 mb-32">
             <div className="w-full md:w-1/2">
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-6">Eliminate blind spots instantly.</h2>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-6">
+                Eliminate blind spots instantly.
+              </h2>
               <p className="text-lg text-neutral-400 mb-8 leading-relaxed">
-                Legal jargon is designed to confuse you. Our AI reads through the noise and extracts the true meaning of every clause, color-coding it by risk level so you know exactly what requires your attention.
+                Legal jargon is designed to confuse you. Our AI reads through
+                the noise and extracts the true meaning of every clause,
+                color-coding it by risk level so you know exactly what requires
+                your attention.
               </p>
               <ul className="space-y-4">
                 <li className="flex items-start gap-3 text-neutral-300">
@@ -203,29 +267,38 @@ return analysis.risk_level // HIGH`}
               </ul>
             </div>
             <div className="w-full md:w-1/2 bg-neutral-900 border border-white/10 rounded-2xl p-8 relative">
-                <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/10 to-transparent rounded-2xl"></div>
-                <div className="relative z-10 flex items-start justify-between mb-4">
-                  <h4 className="font-semibold text-lg text-white flex items-center gap-2">
-                    <ShieldAlert className="w-5 h-5 text-red-400" />
-                    Security Deposit Deductions
-                  </h4>
-                  <span className="text-xs px-3 py-1 rounded-full font-medium border bg-red-500/20 text-red-300 border-red-500/30">
-                    High Risk
-                  </span>
-                </div>
-                <div className="relative z-10 mb-5 bg-indigo-950/20 border border-indigo-500/20 rounded-xl p-4">
-                  <h5 className="text-xs font-semibold text-indigo-300 uppercase tracking-wider mb-2">In Simple Terms</h5>
-                  <p className="text-sm text-neutral-200 leading-relaxed">The landlord can keep your deposit for completely normal wear and tear.</p>
-                </div>
+              <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/10 to-transparent rounded-2xl"></div>
+              <div className="relative z-10 flex items-start justify-between mb-4">
+                <h4 className="font-semibold text-lg text-white flex items-center gap-2">
+                  <ShieldAlert className="w-5 h-5 text-red-400" />
+                  Security Deposit Deductions
+                </h4>
+                <span className="text-xs px-3 py-1 rounded-full font-medium border bg-red-500/20 text-red-300 border-red-500/30">
+                  High Risk
+                </span>
+              </div>
+              <div className="relative z-10 mb-5 bg-indigo-950/20 border border-indigo-500/20 rounded-xl p-4">
+                <h5 className="text-xs font-semibold text-indigo-300 uppercase tracking-wider mb-2">
+                  In Simple Terms
+                </h5>
+                <p className="text-sm text-neutral-200 leading-relaxed">
+                  The landlord can keep your deposit for completely normal wear
+                  and tear.
+                </p>
+              </div>
             </div>
           </div>
 
           {/* Deep Dive 2 */}
           <div className="flex flex-col md:flex-row-reverse items-center gap-16">
             <div className="w-full md:w-1/2">
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-6">Negotiate with absolute leverage.</h2>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-6">
+                Negotiate with absolute leverage.
+              </h2>
               <p className="text-lg text-neutral-400 mb-8 leading-relaxed">
-                Don't just find problems—fix them. With one click, NyayaCheck generates polite, professional, and legally sound negotiation emails that cite the exact laws the landlord is violating.
+                Don't just find problems—fix them. With one click, NyayaCheck
+                generates polite, professional, and legally sound negotiation
+                emails that cite the exact laws the landlord is violating.
               </p>
               <ul className="space-y-4">
                 <li className="flex items-start gap-3 text-neutral-300">
@@ -251,12 +324,21 @@ return analysis.risk_level // HIGH`}
                   </div>
                 </div>
                 <p className="text-sm text-neutral-300 leading-relaxed">
-                  Hi [Landlord],<br/><br/>
-                  I noticed Clause 4 regarding the security deposit. Under the Model Tenancy Act, deductions cannot be made for standard wear and tear. Could we update this clause to reflect the standard statutory protections before signing?<br/><br/>
+                  Hi [Landlord],
+                  <br />
+                  <br />
+                  I noticed Clause 4 regarding the security deposit. Under the
+                  Model Tenancy Act, deductions cannot be made for standard wear
+                  and tear. Could we update this clause to reflect the standard
+                  statutory protections before signing?
+                  <br />
+                  <br />
                   Thanks!
                 </p>
                 <div className="mt-4 pt-4 border-t border-white/10 flex justify-end">
-                   <div className="bg-indigo-600 text-white text-xs px-4 py-2 rounded-lg font-medium">Send Draft</div>
+                  <div className="bg-indigo-600 text-white text-xs px-4 py-2 rounded-lg font-medium">
+                    Send Draft
+                  </div>
                 </div>
               </div>
             </div>
@@ -268,10 +350,18 @@ return analysis.risk_level // HIGH`}
       <section className="py-32 relative overflow-hidden border-t border-white/5">
         <div className="absolute inset-0 bg-indigo-600/5"></div>
         <div className="max-w-4xl mx-auto px-6 relative z-10 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">Ready to protect yourself?</h2>
-          <p className="text-xl text-neutral-400 mb-10">Join thousands of tenants using NyayaCheck to level the playing field.</p>
-          <button 
-            onClick={() => {setView('app'); setAppMode('analyze');}}
+          <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">
+            Ready to protect yourself?
+          </h2>
+          <p className="text-xl text-neutral-400 mb-10">
+            Join thousands of tenants using NyayaCheck to level the playing
+            field.
+          </p>
+          <button
+            onClick={() => {
+              setView("app");
+              setAppMode("analyze");
+            }}
             className="bg-white text-black hover:bg-neutral-200 px-8 py-4 rounded-full font-bold transition-all text-lg shadow-[0_0_40px_rgba(255,255,255,0.2)] hover:shadow-[0_0_60px_rgba(255,255,255,0.3)]"
           >
             Start Analyzing for Free
@@ -286,42 +376,95 @@ return analysis.risk_level // HIGH`}
             <div>
               <div className="flex items-center gap-2 mb-6">
                 <ShieldAlert className="w-5 h-5 text-indigo-500" />
-                <span className="font-bold tracking-tight text-white">NyayaCheck</span>
+                <span className="font-bold tracking-tight text-white">
+                  NyayaCheck
+                </span>
               </div>
               <p className="text-sm text-neutral-500 leading-relaxed">
-                Empowering individuals with AI-driven contract intelligence. Never sign an unfair agreement again.
+                Empowering individuals with AI-driven contract intelligence.
+                Never sign an unfair agreement again.
               </p>
             </div>
             <div>
               <h4 className="font-semibold text-white mb-4">Product</h4>
               <ul className="space-y-3 text-sm text-neutral-400">
-                <li><a href="#" className="hover:text-white transition-colors">Contract Analysis</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Version Compare</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">API Access</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Contract Analysis
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Version Compare
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    API Access
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Pricing
+                  </a>
+                </li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold text-white mb-4">Resources</h4>
               <ul className="space-y-3 text-sm text-neutral-400">
-                <li><a href="#" className="hover:text-white transition-colors">Documentation</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Legal Database</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Community</a></li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Documentation
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Legal Database
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Blog
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Community
+                  </a>
+                </li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold text-white mb-4">Company</h4>
               <ul className="space-y-3 text-sm text-neutral-400">
-                <li><a href="#" className="hover:text-white transition-colors">About Us</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    About Us
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Careers
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Privacy Policy
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Terms of Service
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
           <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-neutral-600">© 2026 NyayaCheck. All rights reserved.</p>
+            <p className="text-sm text-neutral-600">
+              © 2026 NyayaCheck. All rights reserved.
+            </p>
           </div>
         </div>
       </footer>

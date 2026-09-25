@@ -1,18 +1,22 @@
-const fs = require('fs');
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
-const { extractText, segmentClauses } = require('../services/documentService');
-const { processClause, analyzeDocumentLevelRisks, generateSummaryChecklist } = require('../services/ragService');
-const { initDB } = require('../services/db');
+const fs = require("fs");
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, "../.env") });
+const { extractText, segmentClauses } = require("../services/documentService");
+const {
+  processClause,
+  analyzeDocumentLevelRisks,
+  generateSummaryChecklist,
+} = require("../services/ragService");
+const { initDB } = require("../services/db");
 
 async function runSummaryTest() {
   await initDB();
-  const pdfPath = path.join(__dirname, 'test_agreement.pdf');
+  const pdfPath = path.join(__dirname, "test_agreement.pdf");
   console.log("1. Reading test agreement PDF:", pdfPath);
-  
+
   const buffer = fs.readFileSync(pdfPath);
-  const text = await extractText(buffer, 'application/pdf');
-  
+  const text = await extractText(buffer, "application/pdf");
+
   console.log("2. Segmenting clauses...");
   const clauses = segmentClauses(text);
   console.log(`Segmented into ${clauses.length} clauses.`);
@@ -29,21 +33,28 @@ async function runSummaryTest() {
     clauseAnalyses.push({
       id: clause.id,
       text: clause.text,
-      analysis
+      analysis,
     });
   }
 
   console.log("5. Generating Summary Checklist & Lawyer Questions...");
-  const checklist = await generateSummaryChecklist(documentRisks, clauseAnalyses);
+  const checklist = await generateSummaryChecklist(
+    documentRisks,
+    clauseAnalyses,
+  );
 
-  console.log("\n=================== GENERATED SUMMARY CHECKLIST OUTPUT ===================\n");
+  console.log(
+    "\n=================== GENERATED SUMMARY CHECKLIST OUTPUT ===================\n",
+  );
   console.log(JSON.stringify(checklist, null, 2));
-  console.log("\n=========================================================================\n");
+  console.log(
+    "\n=========================================================================\n",
+  );
 
   process.exit(0);
 }
 
-runSummaryTest().catch(err => {
+runSummaryTest().catch((err) => {
   console.error("Test failed:", err);
   process.exit(1);
 });

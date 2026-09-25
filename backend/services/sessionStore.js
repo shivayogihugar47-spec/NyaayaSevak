@@ -1,9 +1,12 @@
-const { queryWithRetry } = require('./db');
+const { queryWithRetry } = require("./db");
 
 // Helper to get session from Postgres
 async function getSession(sessionId) {
   try {
-    const res = await queryWithRetry('SELECT data FROM sessions WHERE id = $1', [sessionId]);
+    const res = await queryWithRetry(
+      "SELECT data FROM sessions WHERE id = $1",
+      [sessionId],
+    );
     if (res.rows.length > 0) {
       return res.rows[0].data;
     }
@@ -17,8 +20,8 @@ async function getSession(sessionId) {
 async function saveSession(sessionId, sessionData) {
   try {
     await queryWithRetry(
-      'INSERT INTO sessions (id, data) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data',
-      [sessionId, JSON.stringify(sessionData)]
+      "INSERT INTO sessions (id, data) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data",
+      [sessionId, JSON.stringify(sessionData)],
     );
   } catch (err) {
     console.error("saveSession error:", err);
@@ -33,5 +36,5 @@ module.exports = {
   sessionStore,
   voiceSourcesStore,
   getSession,
-  saveSession
+  saveSession,
 };

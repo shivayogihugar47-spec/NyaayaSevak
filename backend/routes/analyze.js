@@ -1,31 +1,35 @@
-const express = require('express');
-const multer = require('multer');
-const { extractText, segmentClauses } = require('../services/documentService');
-const ragService = require('../services/ragService');
+const express = require("express");
+const multer = require("multer");
+const { extractText, segmentClauses } = require("../services/documentService");
+const ragService = require("../services/ragService");
+const { body, validationResult } = require("express-validator");
 
 const router = express.Router();
 
 // Efficiency & Security: Limit file upload size to 5MB to prevent memory exhaustion
-const upload = multer({ 
+const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 } 
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
 
-const { sessionStore, getSession, saveSession } = require('../services/sessionStore');
-
+const {
+  sessionStore,
+  getSession,
+  saveSession,
+} = require("../services/sessionStore");
 
 /**
  * POST /api/upload
  * Accepts a file, parses it, segments into clauses, and returns the raw clauses.
  */
-router.post('/upload', upload.single('document'), async (req, res) => {
+router.post("/upload", upload.single("document"), async (req, res) => {
   try {
     if (!req.file && !req.body.text) {
-      return res.status(400).json({ error: 'No document provided' });
+      return res.status(400).json({ error: "No document provided" });
     }
 
-    let rawText = '';
-    
+    let rawText = "";
+
     if (req.file) {
       rawText = await extractText(req.file.buffer, req.file.mimetype);
     } else {
@@ -33,13 +37,13 @@ router.post('/upload', upload.single('document'), async (req, res) => {
     }
 
     const clauses = segmentClauses(rawText);
-    
+
     // Run document-level risk check (e.g. 11-month lease)
     const documentRisks = await ragService.analyzeDocumentLevelRisks(rawText);
 
     // Generate a temporary session ID
     const sessionId = Date.now().toString();
-    const userId = req.body.userId || 'anon_' + sessionId;
+    const userId = req.body.userId || "anon_" + sessionId;
     const sessionObj = { clauses, flags: {}, documentRisks, userId };
     sessionStore[sessionId] = sessionObj;
     await saveSession(sessionId, sessionObj);
@@ -48,10 +52,16 @@ router.post('/upload', upload.single('document'), async (req, res) => {
   } catch (error) {
     console.error("Upload Error:", error);
     // Forward specific OCR errors to the client
-    if (error.message.includes("OCR") || error.message.includes("Could not extract") || error.message.includes("Could not read") || error.message.includes("billing") || error.message.includes("PERMISSION_DENIED")) {
+    if (
+      error.message.includes("OCR") ||
+      error.message.includes("Could not extract") ||
+      error.message.includes("Could not read") ||
+      error.message.includes("billing") ||
+      error.message.includes("PERMISSION_DENIED")
+    ) {
       return res.status(400).json({ error: error.message });
     }
-    res.status(500).json({ error: 'Failed to process document' });
+    res.status(500).json({ error: "Failed to process document" });
   }
 });
 
@@ -59,63 +69,102 @@ router.post('/upload', upload.single('document'), async (req, res) => {
  * POST /api/analyze-clause
  * Analyzes a specific clause from the document.
  */
-router.post('/analyze-clause', async (req, res) => {
-  const { sessionId, clauseId, language = 'English' } = req.body;
-
-  let session = sessionStore[sessionId];
-  if (!session) session = await getSession(sessionId);
-  if (!sessionId || !session) {
-    return res.status(404).json({ error: 'Session not found' });
-  }
-
-  const clause = session.clauses.find(c => c.id === clauseId);
-  if (!clause) {
-    return res.status(404).json({ error: 'Clause not found' });
-  }
-
-  try {
-    // Process clause with RAG
-    const analysis = await ragService.processClause(clause.text, language);
-    
-    // Save to session
-    session.flags[clauseId] = analysis;
-    sessionStore[sessionId] = session;
-    await saveSession(sessionId, session);
-
-    res.json({ clauseId, analysis });
-  } catch (error) {
-    console.error("Analysis Error:", error);
-    res.status(500).json({ error: 'Failed to analyze clause' });
-  }
-});
-
-// POST /api/chat
-router.post('/chat', async (req, res) => {
-  try {
-    const { sessionId, question, language = 'English', clauses } = req.body;
-    let session = sessionStore[sessionId];
-    if (!session) session = await getSession(sessionId);
-    
-    // Fallback for stateless serverless environments (Vercel)
-    if (!session && clauses) {
-      session = { clauses };
+router.post(
+  "/analyze-clause",
+  [
+    body("sessionId").isString().notEmpty().trim().escape(),
+    body("clauseId").isString().notEmpty().trim().escape(),
+    body("language").optional().isString().trim().escape(),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res
+        .status(400)
+        .json({ error: "Invalid input", details: errors.array() });
     }
 
-    if (!session || !session.clauses) return res.status(404).json({ error: "Session or clauses not found" });
+    const { sessionId, clauseId, language = "English" } = req.body;
 
-    const chatData = await ragService.generateChatResponse(question, session.clauses, language);
-    res.json({ answer: chatData.answer, sources: chatData.sources || [] });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Chat failed" });
-  }
-});
+    let session = sessionStore[sessionId];
+    if (!session) session = await getSession(sessionId);
+    if (!sessionId || !session) {
+      return res.status(404).json({ error: "Session not found" });
+    }
+
+    const clause = session.clauses.find((c) => c.id === clauseId);
+    if (!clause) {
+      return res.status(404).json({ error: "Clause not found" });
+    }
+
+    try {
+      // Process clause with RAG
+      const analysis = await ragService.processClause(clause.text, language);
+
+      // Save to session
+      session.flags[clauseId] = analysis;
+      sessionStore[sessionId] = session;
+      await saveSession(sessionId, session);
+
+      res.json({ clauseId, analysis });
+    } catch (error) {
+      console.error("Analysis Error:", error);
+      res.status(500).json({ error: "Failed to analyze clause" });
+    }
+  },
+);
+
+// POST /api/chat
+router.post(
+  "/chat",
+  [
+    body("sessionId").isString().notEmpty().trim().escape(),
+    body("question").isString().notEmpty().trim(),
+    body("language").optional().isString().trim().escape(),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res
+        .status(400)
+        .json({ error: "Invalid input", details: errors.array() });
+    }
+
+    try {
+      const { sessionId, question, language = "English", clauses } = req.body;
+      let session = sessionStore[sessionId];
+      if (!session) session = await getSession(sessionId);
+
+      // Fallback for stateless serverless environments (Vercel)
+      if (!session && clauses) {
+        session = { clauses };
+      }
+
+      if (!session || !session.clauses)
+        return res.status(404).json({ error: "Session or clauses not found" });
+
+      const chatData = await ragService.generateChatResponse(
+        question,
+        session.clauses,
+        language,
+      );
+      res.json({ answer: chatData.answer, sources: chatData.sources || [] });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Chat failed" });
+    }
+  },
+);
 
 // POST /api/negotiate
-router.post('/negotiate', async (req, res) => {
+router.post("/negotiate", async (req, res) => {
   try {
-    const { clauseText, analysis, language = 'English' } = req.body;
-    const message = await ragService.generateNegotiationMessage(clauseText, analysis, language);
+    const { clauseText, analysis, language = "English" } = req.body;
+    const message = await ragService.generateNegotiationMessage(
+      clauseText,
+      analysis,
+      language,
+    );
     res.json({ message });
   } catch (err) {
     console.error(err);
@@ -123,47 +172,62 @@ router.post('/negotiate', async (req, res) => {
   }
 });
 
-
 // POST /api/compare
-router.post('/compare', upload.fields([{ name: 'fileA', maxCount: 1 }, { name: 'fileB', maxCount: 1 }]), async (req, res) => {
-  try {
-    let textA = '';
-    let textB = '';
+router.post(
+  "/compare",
+  upload.fields([
+    { name: "fileA", maxCount: 1 },
+    { name: "fileB", maxCount: 1 },
+  ]),
+  async (req, res) => {
+    try {
+      let textA = "";
+      let textB = "";
 
-    if (req.files && req.files.fileA) {
-      textA = await extractText(req.files.fileA[0].buffer, req.files.fileA[0].mimetype);
-    } else if (req.body.textA) {
-      textA = req.body.textA;
+      if (req.files && req.files.fileA) {
+        textA = await extractText(
+          req.files.fileA[0].buffer,
+          req.files.fileA[0].mimetype,
+        );
+      } else if (req.body.textA) {
+        textA = req.body.textA;
+      }
+
+      if (req.files && req.files.fileB) {
+        textB = await extractText(
+          req.files.fileB[0].buffer,
+          req.files.fileB[0].mimetype,
+        );
+      } else if (req.body.textB) {
+        textB = req.body.textB;
+      }
+
+      if (!textA || !textB)
+        return res.status(400).json({ error: "Missing documents to compare" });
+
+      const analysis = await ragService.compareDocuments(textA, textB);
+      res.json({ analysis });
+    } catch (err) {
+      console.error("Compare error:", err);
+      res
+        .status(500)
+        .json({ error: "Compare generation failed: " + err.message });
     }
-
-    if (req.files && req.files.fileB) {
-      textB = await extractText(req.files.fileB[0].buffer, req.files.fileB[0].mimetype);
-    } else if (req.body.textB) {
-      textB = req.body.textB;
-    }
-
-    if (!textA || !textB) return res.status(400).json({ error: "Missing documents to compare" });
-
-    const analysis = await ragService.compareDocuments(textA, textB);
-    res.json({ analysis });
-  } catch (err) {
-    console.error("Compare error:", err);
-    res.status(500).json({ error: "Compare generation failed: " + err.message });
-  }
-});
+  },
+);
 
 // POST /api/export-summary
-router.post('/export-summary', async (req, res) => {
+router.post("/export-summary", async (req, res) => {
   try {
     const { sessionId } = req.body;
     let session = sessionStore[sessionId];
     if (!session) session = await getSession(sessionId);
-    
+
     if (!session && req.body.clauses && req.body.flags) {
       session = {
         clauses: req.body.clauses,
         flags: req.body.flags,
-        documentRisks: req.body.documentRisks || []
+        documentRisks: req.body.documentRisks || [],
       };
     }
 
@@ -183,11 +247,14 @@ router.post('/export-summary', async (req, res) => {
       clauseAnalyses.push({
         id: clause.id,
         text: clause.text,
-        analysis
+        analysis,
       });
     }
 
-    const summaryChecklist = await ragService.generateSummaryChecklist(session.documentRisks || [], clauseAnalyses);
+    const summaryChecklist = await ragService.generateSummaryChecklist(
+      session.documentRisks || [],
+      clauseAnalyses,
+    );
     res.json(summaryChecklist);
   } catch (err) {
     console.error("Export summary error:", err);
