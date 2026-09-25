@@ -795,7 +795,7 @@ function App() {
                           <h4 className="text-lg font-semibold text-white flex items-center gap-2">
                             {diff.clause_topic}
                           </h4>
-                          <span className={\`text-[10px] px-2.5 py-1 rounded uppercase tracking-wider font-bold border \${riskBg} \${riskColor} flex items-center gap-1.5\`}>
+                          <span className={`text-[10px] px-2.5 py-1 rounded uppercase tracking-wider font-bold border ${riskBg} ${riskColor} flex items-center gap-1.5`}>
                             <AlertTriangle className="w-3 h-3" /> {diff.risk_level} Risk Shift
                           </span>
                         </div>
