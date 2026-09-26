@@ -276,32 +276,35 @@ async function generateChatResponse(
     .map((l) => `${l.act_name} Sec ${l.section_number}: ${l.content}`)
     .join("\n\n");
 
-  const prompt = `You are NyayaCheck, a helpful AI legal assistant. Answer the user's question clearly based on the provided document clauses and retrieved statutory laws.
-  IMPORTANT: You must respond entirely in ${language}.
-
-Document Context:
-${fullDocText.substring(0, 4000)}
-
-Retrieved Laws Context:
-${retrievedLaws.length > 0 ? lawsText : "NONE FOUND"}
+  const systemPrompt = `You are NyayaCheck, a helpful AI legal assistant. Answer the user's question clearly based on the provided document clauses and retrieved statutory laws.
+IMPORTANT: You MUST write the "answer" field entirely in ${language}. Do not refuse to speak ${language}.
 
 Rules:
 1. For greetings, greet the user warmly and invite them to ask any question.
 2. Answer accurately using the contexts provided.
 3. Output your response as a JSON object matching this exact schema:
 {
-  "answer": "Your detailed answer to the question in ${language}",
+  "answer": "Your detailed answer to the question written natively in ${language}",
   "sources": [
     { "type": "clause" | "law", "reference": "e.g. Clause 2 or Indian Contract Act, Sec 74" }
   ]
-}
+}`;
+
+  const userPrompt = `Document Context:
+${fullDocText.substring(0, 4000)}
+
+Retrieved Laws Context:
+${retrievedLaws.length > 0 ? lawsText : "NONE FOUND"}
 
 User Question: ${question}`;
 
   try {
     const response = await openrouter.chat.completions.create({
       model: MODEL,
-      messages: [{ role: "user", content: prompt }],
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
+      ],
       response_format: { type: "json_object" },
     });
 
