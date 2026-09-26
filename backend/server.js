@@ -77,4 +77,10 @@ if (process.env.NODE_ENV !== "production" && process.env.NODE_ENV !== "test") {
   });
 }
 
+// Global error handler to prevent HTML responses for Vercel timeouts/payload errors
+app.use((err, req, res, next) => {
+  console.error("Global error handler:", err);
+  res.status(err.status || 500).json({ error: err.message || "Internal Server Error" });
+});
+
 module.exports = app;

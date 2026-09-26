@@ -39,12 +39,13 @@ router.post("/upload", upload.single("document"), async (req, res) => {
     const clauses = segmentClauses(rawText);
 
     // Run document-level risk check (e.g. 11-month lease)
-    const documentRisks = await ragService.analyzeDocumentLevelRisks(rawText);
+    // Decoupled to a separate endpoint to prevent Vercel 10s timeouts
+    const documentRisks = [];
 
     // Generate a temporary session ID
     const sessionId = Date.now().toString();
     const userId = req.body.userId || "anon_" + sessionId;
-    const sessionObj = { clauses, flags: {}, documentRisks, userId };
+    const sessionObj = { clauses, flags: {}, documentRisks, userId, rawText };
     sessionStore[sessionId] = sessionObj;
     await saveSession(sessionId, sessionObj);
 
@@ -112,6 +113,45 @@ router.post(
       res.status(500).json({ error: "Failed to analyze clause" });
     }
   },
+);
+
+/**
+ * POST /api/analyze-document-risks
+ * Performs the heavy document-level risk analysis asynchronously
+ */
+router.post(
+  "/analyze-document-risks",
+  [
+    body("sessionId").isString().notEmpty().trim().escape(),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ error: "Invalid input", details: errors.array() });
+    }
+
+    const { sessionId } = req.body;
+    let session = sessionStore[sessionId];
+    if (!session) session = await getSession(sessionId);
+    
+    if (!session) {
+      return res.status(404).json({ error: "Session not found" });
+    }
+
+    try {
+      const rawText = session.rawText || session.clauses.map(c => c.text).join("\n\n");
+      const documentRisks = await ragService.analyzeDocumentLevelRisks(rawText);
+      
+      session.documentRisks = documentRisks;
+      sessionStore[sessionId] = session;
+      await saveSession(sessionId, session);
+      
+      res.json({ documentRisks });
+    } catch (error) {
+      console.error("Document Risk Analysis Error:", error);
+      res.status(500).json({ error: "Failed to analyze document risks" });
+    }
+  }
 );
 
 // POST /api/chat

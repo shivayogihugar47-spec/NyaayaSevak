@@ -132,8 +132,17 @@ function App() {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setSession(res.data);
+      
+      // Asynchronously fetch document risks to prevent Vercel timeouts
+      if (res.data && res.data.sessionId) {
+        axios.post("/api/analyze-document-risks", { sessionId: res.data.sessionId })
+          .then(riskRes => {
+            setSession(prev => prev ? { ...prev, documentRisks: riskRes.data.documentRisks } : prev);
+          })
+          .catch(err => console.error("Failed to fetch document risks:", err));
+      }
     } catch (err) {
-      const msg = err.response?.data?.error || "Error parsing document";
+      const msg = err.response?.data?.error || "Error processing document. The file might be too large or timed out.";
       alert(msg);
     } finally {
       setProcessing(false);
