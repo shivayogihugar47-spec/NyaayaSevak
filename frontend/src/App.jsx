@@ -542,10 +542,18 @@ function App() {
               key="dashboard"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex flex-col lg:flex-row gap-6 relative z-10 h-[calc(100vh-120px)]"
+              className="flex flex-col lg:flex-row gap-6 relative z-10 h-[calc(100vh-120px)] print:h-auto print:block"
             >
+              {/* Print-only Header */}
+              <div className="hidden print:block print:mb-8 text-center border-b border-neutral-300 pb-6">
+                <h1 className="text-3xl font-black text-black">NyayaCheck</h1>
+                <p className="text-sm text-neutral-600 mt-1">
+                  Document Risk Analysis Report
+                </p>
+              </div>
+
               {/* Left Column: Document View */}
-              <div className="flex-1 flex flex-col min-w-0 bg-[#111113] border border-neutral-800 rounded-xl overflow-hidden shadow-sm">
+              <div className="flex-1 flex flex-col min-w-0 bg-[#111113] border border-neutral-800 rounded-xl overflow-hidden shadow-sm print:hidden">
                 <div className="flex justify-between items-center px-4 py-3 border-b border-neutral-800 bg-[#18181b]">
                   <h3 className="font-medium text-white flex items-center gap-2 text-sm">
                     <FileText className="w-4 h-4 text-neutral-400" /> Document
@@ -575,9 +583,9 @@ function App() {
               </div>
 
               {/* Right Column: Analysis / Chat */}
-              <div className="w-full lg:w-[480px] flex flex-col bg-[#111113] border border-neutral-800 rounded-xl overflow-hidden shadow-sm shrink-0">
+              <div className="w-full lg:w-[480px] flex flex-col bg-[#111113] border border-neutral-800 rounded-xl overflow-hidden shadow-sm shrink-0 print:w-full print:border-none print:shadow-none print:bg-transparent">
                 {/* Tabs */}
-                <div className="flex p-1.5 border-b border-neutral-800 bg-[#18181b] gap-1 shrink-0">
+                <div className="flex p-1.5 border-b border-neutral-800 bg-[#18181b] gap-1 shrink-0 print:hidden">
                   <button
                     onClick={() => setChatOpen(false)}
                     className={`flex-1 py-2 text-xs font-medium rounded-md transition-colors flex items-center justify-center gap-2 ${!chatOpen ? "bg-neutral-800 text-white shadow-sm" : "text-neutral-400 hover:text-white hover:bg-neutral-800/50"}`}
@@ -593,11 +601,11 @@ function App() {
                 </div>
 
                 {/* Content Area */}
-                <div className="flex-1 overflow-y-auto bg-[#09090b] relative flex flex-col">
+                <div className="flex-1 overflow-y-auto bg-[#09090b] relative flex flex-col print:overflow-visible print:bg-transparent">
                   {!chatOpen ? (
                     // Risk Analysis Content
-                    <div className="p-5 flex-1">
-                      <div className="flex justify-between items-center mb-6">
+                    <div className="p-5 flex-1 print:p-0">
+                      <div className="flex justify-between items-center mb-6 print:hidden">
                         <h3 className="text-base font-semibold text-white">
                           Risk Flags
                         </h3>
@@ -787,7 +795,7 @@ function App() {
                     </div>
                   ) : (
                     // Chat Content
-                    <div className="flex flex-col h-full bg-[#09090b]">
+                    <div className="flex flex-col h-full bg-[#09090b] print:hidden">
                       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
                         {chatMessages.length === 0 && (
                           <div className="flex flex-col items-center justify-center h-full text-neutral-500 text-center px-4">
