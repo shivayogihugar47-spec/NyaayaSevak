@@ -281,7 +281,8 @@ async function generateChatResponse(
 Rules:
 1. For greetings, greet the user warmly and invite them to ask any question.
 2. Answer accurately using the contexts provided.
-3. Output your response as a JSON object matching this exact schema:
+3. If the user explicitly asks you to speak in a specific language (e.g. Kannada, Hindi), you MUST write your answer natively in that language. Otherwise, default to English.
+4. Output your response as a JSON object matching this exact schema:
 {
   "answer": "Your detailed answer to the question",
   "sources": [
