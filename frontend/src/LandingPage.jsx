@@ -8,8 +8,6 @@ import {
   UploadCloud,
   ShieldCheck,
   Scale,
-  FileSignature,
-  Layers,
   User,
   MessageSquare,
   Menu,

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
-import { ShieldAlert, Search, ZoomIn } from "lucide-react";
+import { ZoomIn } from "lucide-react";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
@@ -22,8 +22,6 @@ export default function DocumentViewer({
   const [pageNumber, setPageNumber] = useState(1);
   const containerRef = useRef(null);
   const [boxes, setBoxes] = useState({});
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [hoveredBox, setHoveredBox] = useState(null);
   const isImage = file && file.type && file.type.startsWith("image/");
 
   function onDocumentLoadSuccess({ numPages }) {
@@ -119,7 +117,7 @@ export default function DocumentViewer({
 
     const timeout = setTimeout(findTextBounds, 1500); // wait for text layer/image to fully render
     return () => clearTimeout(timeout);
-  }, [clauses, file, pageNumber, isImage]);
+  }, [clauses, file, pageNumber, isImage, onBoxesReady]);
 
   // Handle chat auto-scroll
   useEffect(() => {
@@ -131,44 +129,10 @@ export default function DocumentViewer({
     }
   }, [chatClauseId, boxes]);
 
-  const handleMouseMove = (e) => {
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top + containerRef.current.scrollTop;
-    setMousePos({ x: e.clientX, y: e.clientY });
-
-    // Check collision with boxes
-    let found = null;
-    Object.entries(boxes).forEach(([id, box]) => {
-      if (
-        x >= box.left &&
-        x <= box.left + box.width &&
-        y >= box.top &&
-        y <= box.top + box.height
-      ) {
-        found = id;
-      }
-    });
-    setHoveredBox(found);
-  };
-
-  const getTooltipPosition = () => {
-    let x = mousePos.x + 30;
-    let y = mousePos.y + 30;
-
-    if (typeof window !== "undefined") {
-      if (x + 384 > window.innerWidth) x = mousePos.x - 400;
-      if (y + 200 > window.innerHeight) y = mousePos.y - 220;
-    }
-    return { left: x, top: y };
-  };
-
   return (
     <div
       className="relative w-full h-[85vh] overflow-auto scrollbar-hide bg-[#0a0a0c]/80 backdrop-blur-3xl rounded-3xl border border-white/5 shadow-2xl shadow-indigo-900/10"
       ref={containerRef}
-      onMouseMove={handleMouseMove}
     >
       <div className="sticky top-0 left-0 bg-[#0a0a0c]/90 backdrop-blur-xl py-4 px-6 z-10 flex justify-between border-b border-white/5 shadow-sm">
         <h3 className="font-semibold text-white/90 flex items-center gap-2.5 tracking-tight text-lg">
@@ -179,6 +143,7 @@ export default function DocumentViewer({
           <div className="flex gap-3 items-center">
             <button
               onClick={() => setPageNumber(Math.max(1, pageNumber - 1))}
+              aria-label="Previous Page"
               className="text-xs bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-lg transition-colors font-medium"
             >
               Prev
@@ -188,6 +153,7 @@ export default function DocumentViewer({
             </span>
             <button
               onClick={() => setPageNumber(Math.min(numPages, pageNumber + 1))}
+              aria-label="Next Page"
               className="text-xs bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-lg transition-colors font-medium"
             >
               Next

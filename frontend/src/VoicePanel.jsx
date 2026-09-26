@@ -6,8 +6,6 @@ import {
   MicOff,
   PhoneOff,
   Volume2,
-  Globe,
-  ShieldAlert,
   FileText,
   CheckCircle2,
   Loader2,
@@ -56,7 +54,9 @@ function VoicePanel({ sessionId, onClose }) {
           if (res.data && res.data.sources) {
             setSources(res.data.sources);
           }
-        } catch (e) {}
+        } catch (err) {
+          // ignore
+        }
       };
       fetchSources();
       interval = setInterval(fetchSources, 1500);

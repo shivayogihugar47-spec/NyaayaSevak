@@ -24,7 +24,7 @@ import ReactMarkdown from "react-markdown";
 import LandingPage from "./LandingPage";
 import VoicePanel from "./VoicePanel";
 import DocumentViewer from "./DocumentViewer";
-import { Document, Page, pdfjs } from "react-pdf";
+import { pdfjs } from "react-pdf";
 
 axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || "";
 
@@ -55,23 +55,7 @@ function App() {
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [summaryData, setSummaryData] = useState(null);
 
-  // Clear analysis cache when language changes so it re-translates on click
-  useEffect(() => {
-    setFlags({});
-    setNegotiationDrafts({});
-    setAnalyzingClause(null);
-    setChatMessages([
-      {
-        role: "assistant",
-        content:
-          language === "Kannada"
-            ? "ನಮಸ್ಕಾರ! ನಿಮ್ಮ ಡಾಕ್ಯುಮೆಂಟ್ ಬಗ್ಗೆ ಪ್ರಶ್ನೆಗಳನ್ನು ಕೇಳಿ."
-            : language === "Hindi"
-              ? "नमस्ते! अपने दस्तावेज़ के बारे में कोई भी प्रश्न पूछें।"
-              : "Hi! Ask me any questions about your document or the laws we found.",
-      },
-    ]);
-  }, [language]);
+
 
   const fetchSummaryChecklist = async () => {
     if (!session) return;
@@ -86,6 +70,7 @@ function App() {
       });
       setSummaryData(res.data);
     } catch (err) {
+      console.error(err);
       alert("Failed to export summary checklist.");
     } finally {
       setSummaryLoading(false);
@@ -110,7 +95,25 @@ function App() {
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const [chatClauseId, setChatClauseId] = useState(null);
-  const [documentBoxes, setDocumentBoxes] = useState({});
+
+  // Clear analysis cache when language changes so it re-translates on click
+  useEffect(() => {
+    setFlags({});
+    setNegotiationDrafts({});
+    setAnalyzingClause(null);
+    setChatMessages([
+      {
+        role: "assistant",
+        content:
+          language === "Kannada"
+            ? "ನಮಸ್ಕಾರ! ನಿಮ್ಮ ಡಾಕ್ಯುಮೆಂಟ್ ಬಗ್ಗೆ ಪ್ರಶ್ನೆಗಳನ್ನು ಕೇಳಿ."
+            : language === "Hindi"
+              ? "नमस्ते! अपने दस्तावेज़ के बारे में कोई भी प्रश्न पूछें।"
+              : "Hi! Ask me any questions about your document or the laws we found.",
+      },
+    ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [language]);
 
   const handleUpload = async (e) => {
     e.preventDefault();
@@ -171,6 +174,7 @@ function App() {
       });
       setFlags((prev) => ({ ...prev, [clause.id]: res.data.analysis }));
     } catch (err) {
+      console.error(err);
       setFlags((prev) => ({
         ...prev,
         [clause.id]: {
@@ -200,6 +204,7 @@ function App() {
         [clauseId]: res.data.message,
       }));
     } catch (err) {
+      console.error(err);
       setNegotiationDrafts((prev) => ({
         ...prev,
         [clauseId]: "Failed to draft message.",
@@ -241,6 +246,7 @@ function App() {
         setChatClauseId(null);
       }
     } catch (err) {
+      console.error(err);
       setChatMessages((prev) => [
         ...prev,
         { role: "assistant", content: "Sorry, I encountered an error." },
@@ -577,7 +583,6 @@ function App() {
                     activeClauseId={analyzingClause}
                     onClauseClick={analyzeClause}
                     chatClauseId={chatClauseId}
-                    onBoxesReady={setDocumentBoxes}
                   />
                 </div>
               </div>
